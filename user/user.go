@@ -3,11 +3,11 @@ package user
 import "time"
 
 type User struct {
-	ID        int
-	Nickname  string
-	Email     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        int64     `json:"id"`
+	Nickname  string    `json:"nickname"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 var UserList = []User{
