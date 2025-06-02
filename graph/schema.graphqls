@@ -19,7 +19,7 @@ input NewUser {
 
 
 type Mutation {
-  createUser(input: NewUser!): String!
+  createUser(input: NewUser!): User!
 }
 
 type Query {
