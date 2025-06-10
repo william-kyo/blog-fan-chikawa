@@ -12,14 +12,23 @@ type User {
   updatedAt: Time!
 }
 
-input NewUser {
+type UserDevice {
+  id: ID!
+  userId: ID!
+  deviceId: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+input LoginUser {
   nickname: String!
   email: String!
+  deviceId: String!
 }
 
 
 type Mutation {
-  createUser(input: NewUser!): User!
+  login(input: LoginUser!): User!
 }
 
 type Query {

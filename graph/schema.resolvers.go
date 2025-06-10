@@ -9,28 +9,43 @@ import (
 	"blog-fanchiikawa-service/graph/model"
 	"blog-fanchiikawa-service/greetings"
 	"context"
+	"database/sql"
 	"log"
 )
 
-// CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+// Login is the resolver for the login field.
+func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*model.User, error) {
 	// If email is in the database, return user info
 	row := db.DB.QueryRow("SELECT * FROM user WHERE email = ?", input.Email)
-	if row != nil {
-		var user model.User
-		err := row.Scan(&user.ID, &user.Nickname, &user.Email, &user.CreatedAt, &user.UpdatedAt)
-		if err != nil {
-			return nil, err
-		}
+	var user model.User
+	err := row.Scan(&user.ID, &user.Nickname, &user.Email, &user.CreatedAt, &user.UpdatedAt)
+	if err == nil {
+		// User exists, return the user
 		return &user, nil
+	} else if err != sql.ErrNoRows {
+		// If error is not "no rows", return the error
+		return nil, err
 	}
 
+	// User doesn't exist, create new user
 	var newUser model.User
-
 	newUser.Nickname = input.Nickname
 	newUser.Email = input.Email
 
-	result, err := db.DB.Exec("INSERT INTO user (nickname, email) VALUES (?, ?)", newUser.Nickname, newUser.Email)
+	// Start transaction
+	tx, err := db.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	// Defer rollback in case of error
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Insert user
+	result, err := tx.Exec("INSERT INTO user (nickname, email) VALUES (?, ?)", newUser.Nickname, newUser.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -40,19 +55,25 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		return nil, err
 	}
 
+	// Insert device
+	_, err = tx.Exec("INSERT INTO user_device (user_id, device_id) VALUES (?, ?)", lastInsertId, input.DeviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit transaction
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
 	message, _ := greetings.Hello(newUser.Nickname)
 	log.Println(message)
 
-	row = db.DB.QueryRow(" SELECT * FROM user WHERE id = ?", lastInsertId)
-
-	if row == nil {
-		return &newUser, nil
-	}
-
-	var user model.User
+	// Get the newly created user
+	row = db.DB.QueryRow("SELECT * FROM user WHERE id = ?", lastInsertId)
 	err = row.Scan(&user.ID, &user.Nickname, &user.Email, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		return &newUser, nil
+		return nil, err
 	}
 	return &user, nil
 }

@@ -6,12 +6,13 @@ import (
 	"time"
 )
 
-type Mutation struct {
-}
-
-type NewUser struct {
+type LoginUser struct {
 	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
+	DeviceID string `json:"deviceId"`
+}
+
+type Mutation struct {
 }
 
 type Query struct {
@@ -21,6 +22,14 @@ type User struct {
 	ID        int64     `json:"id"`
 	Nickname  string    `json:"nickname"`
 	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type UserDevice struct {
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"userId"`
+	DeviceID  string    `json:"deviceId"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
