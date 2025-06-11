@@ -18,7 +18,7 @@ import (
 const defaultPort = "8080"
 
 func main() {
-	db.InitDB()
+	db.InitMySQL()
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -7,9 +7,9 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-var DB *sql.DB
+var MySQL *sql.DB
 
-func InitDB() {
+func InitMySQL() {
 	cfg := mysql.NewConfig()
 	cfg.User = "root"
 	cfg.Passwd = ""
@@ -19,12 +19,12 @@ func InitDB() {
 	cfg.ParseTime = true
 
 	var err error
-	DB, err = sql.Open("mysql", cfg.FormatDSN())
+	MySQL, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pingErr := DB.Ping()
+	pingErr := MySQL.Ping()
 	if pingErr != nil {
 		log.Fatal(pingErr)
 	}

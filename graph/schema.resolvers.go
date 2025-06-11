@@ -16,7 +16,7 @@ import (
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*model.User, error) {
 	// If email is in the database, return user info
-	row := db.DB.QueryRow("SELECT * FROM user WHERE email = ?", input.Email)
+	row := db.MySQL.QueryRow("SELECT * FROM user WHERE email = ?", input.Email)
 	var user model.User
 	err := row.Scan(&user.ID, &user.Nickname, &user.Email, &user.CreatedAt, &user.UpdatedAt)
 	if err == nil {
@@ -33,7 +33,7 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*m
 	newUser.Email = input.Email
 
 	// Start transaction
-	tx, err := db.DB.Begin()
+	tx, err := db.MySQL.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*m
 	log.Println(message)
 
 	// Get the newly created user
-	row = db.DB.QueryRow("SELECT * FROM user WHERE id = ?", lastInsertId)
+	row = db.MySQL.QueryRow("SELECT * FROM user WHERE id = ?", lastInsertId)
 	err = row.Scan(&user.ID, &user.Nickname, &user.Email, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*m
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	var users []*model.User
-	rows, err := db.DB.Query("SELECT * FROM user limit 10")
+	rows, err := db.MySQL.Query("SELECT * FROM user limit 10")
 	if err != nil {
 		return nil, err
 	}
