@@ -1,6 +1,7 @@
 package main
 
 import (
+	"blog-fanchiikawa-service/awssdk"
 	"blog-fanchiikawa-service/db"
 	"blog-fanchiikawa-service/graph"
 	"log"
@@ -19,6 +20,7 @@ const defaultPort = "8080"
 
 func main() {
 	db.InitMySQL()
+	awssdk.InitS3()
 
 	port := os.Getenv("PORT")
 	if port == "" {
