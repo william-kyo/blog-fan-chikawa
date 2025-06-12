@@ -1,4 +1,4 @@
-package awssdk
+package sdk
 
 import (
 	"sort"
