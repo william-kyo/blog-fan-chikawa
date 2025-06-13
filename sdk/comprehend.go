@@ -30,3 +30,14 @@ func DetectLanguage(text string) (string, error) {
 	}
 	return *result.Languages[0].LanguageCode, nil
 }
+
+func DetectSentiment(text string) (string, error) {
+	result, err := Comprehend.DetectSentiment(&comprehend.DetectSentimentInput{
+		Text:         aws.String(text),
+		LanguageCode: aws.String("en"),
+	})
+	if err != nil {
+		return "UNKNOWN", err
+	}
+	return *result.Sentiment, nil
+}

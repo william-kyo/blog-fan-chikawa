@@ -30,6 +30,7 @@ input LoginUser {
 type Mutation {
   login(input: LoginUser!): User!
   detectLanguage(input: String!): String!
+  detectSentiment(input: String!): String!
 }
 
 type Query {

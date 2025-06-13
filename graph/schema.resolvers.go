@@ -88,6 +88,15 @@ func (r *mutationResolver) DetectLanguage(ctx context.Context, input string) (st
 	return language, nil
 }
 
+// DetectSentiment is the resolver for the detectSentiment field.
+func (r *mutationResolver) DetectSentiment(ctx context.Context, input string) (string, error) {
+	sentiment, err := sdk.DetectSentiment(input)
+	if err != nil {
+		return "", err
+	}
+	return sentiment, nil
+}
+
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	var users []*model.User
