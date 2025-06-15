@@ -26,11 +26,18 @@ input LoginUser {
   deviceId: String!
 }
 
+input TranslateText {
+  text: String!
+  sourceLanguage: String!
+  targetLanguage: String!
+}
+
 
 type Mutation {
   login(input: LoginUser!): User!
   detectLanguage(input: String!): String!
   detectSentiment(input: String!): String!
+  translateText(input: TranslateText): String!
 }
 
 type Query {

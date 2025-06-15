@@ -18,6 +18,12 @@ type Mutation struct {
 type Query struct {
 }
 
+type TranslateText struct {
+	Text           string `json:"text"`
+	SourceLanguage string `json:"sourceLanguage"`
+	TargetLanguage string `json:"targetLanguage"`
+}
+
 type User struct {
 	ID        int64     `json:"id"`
 	Nickname  string    `json:"nickname"`

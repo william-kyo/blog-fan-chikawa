@@ -52,6 +52,7 @@ type ComplexityRoot struct {
 		DetectLanguage  func(childComplexity int, input string) int
 		DetectSentiment func(childComplexity int, input string) int
 		Login           func(childComplexity int, input model.LoginUser) int
+		TranslateText   func(childComplexity int, input *model.TranslateText) int
 	}
 
 	Query struct {
@@ -80,6 +81,7 @@ type MutationResolver interface {
 	Login(ctx context.Context, input model.LoginUser) (*model.User, error)
 	DetectLanguage(ctx context.Context, input string) (string, error)
 	DetectSentiment(ctx context.Context, input string) (string, error)
+	TranslateText(ctx context.Context, input *model.TranslateText) (string, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
@@ -140,6 +142,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(model.LoginUser)), true
+
+	case "Mutation.translateText":
+		if e.complexity.Mutation.TranslateText == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_translateText_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.TranslateText(childComplexity, args["input"].(*model.TranslateText)), true
 
 	case "Query.fetchLastData":
 		if e.complexity.Query.FetchLastData == nil {
@@ -234,6 +248,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputLoginUser,
+		ec.unmarshalInputTranslateText,
 	)
 	first := true
 
@@ -416,6 +431,29 @@ func (ec *executionContext) field_Mutation_login_argsInput(
 	}
 
 	var zeroVal model.LoginUser
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_translateText_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_translateText_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_translateText_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*model.TranslateText, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalOTranslateText2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐTranslateText(ctx, tmp)
+	}
+
+	var zeroVal *model.TranslateText
 	return zeroVal, nil
 }
 
@@ -713,6 +751,61 @@ func (ec *executionContext) fieldContext_Mutation_detectSentiment(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_detectSentiment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_translateText(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_translateText(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().TranslateText(rctx, fc.Args["input"].(*model.TranslateText))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_translateText(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_translateText_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3382,6 +3475,47 @@ func (ec *executionContext) unmarshalInputLoginUser(ctx context.Context, obj any
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTranslateText(ctx context.Context, obj any) (model.TranslateText, error) {
+	var it model.TranslateText
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text", "sourceLanguage", "targetLanguage"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		case "sourceLanguage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceLanguage"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceLanguage = data
+		case "targetLanguage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetLanguage"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TargetLanguage = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3426,6 +3560,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "detectSentiment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_detectSentiment(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "translateText":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_translateText(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4426,6 +4567,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	_ = ctx
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOTranslateText2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐTranslateText(ctx context.Context, v any) (*model.TranslateText, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTranslateText(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

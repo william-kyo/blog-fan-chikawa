@@ -22,6 +22,7 @@ func main() {
 	db.InitMySQL()
 	sdk.InitS3()
 	sdk.InitComprehend()
+	sdk.InitTranslate()
 
 	port := os.Getenv("PORT")
 	if port == "" {

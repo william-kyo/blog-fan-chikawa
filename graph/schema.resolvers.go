@@ -97,6 +97,15 @@ func (r *mutationResolver) DetectSentiment(ctx context.Context, input string) (s
 	return sentiment, nil
 }
 
+// TranslateText is the resolver for the translateText field.
+func (r *mutationResolver) TranslateText(ctx context.Context, input *model.TranslateText) (string, error) {
+	translatedText, err := sdk.TranslateText(input.Text, input.SourceLanguage, input.TargetLanguage)
+	if err != nil {
+		return "", err
+	}
+	return translatedText, nil
+}
+
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	var users []*model.User
