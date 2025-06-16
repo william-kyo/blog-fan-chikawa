@@ -1,132 +1,145 @@
-# Database Analysis and XORM Refactoring Plan
+# Code Architecture Refactoring Plan
 
-## Current Database Implementation Analysis
+## Goal
+Refactor the current code structure into proper layers following Go best practices:
+- Controller Layer (GraphQL Resolvers)
+- Service Layer (Business Logic + AWS SDK)
+- Repository Layer (Database Access)
+- Model Layer (Data Models)
 
-### Current Database Setup
-- **Database Driver**: MySQL using `github.com/go-sql-driver/mysql v1.9.2`
-- **Connection Method**: Standard `database/sql` package with raw SQL queries
-- **Database Name**: `fanchiikawa`
-- **Connection Details**: 
-  - Host: localhost:3306
-  - User: root
-  - Password: (empty)
-  - Parse Time: enabled
+## Current Architecture Analysis
 
-### Database Tables (Inferred from Models)
-Based on the GraphQL models and SQL queries, the database has the following tables:
+### Current File Structure:
+- `graph/schema.resolvers.go` - Contains both GraphQL handling AND business logic
+- `sdk/` - Direct AWS SDK wrappers
+- `db/` - Database models and connection
 
-1. **user table**
-   - `id` (INT64, PRIMARY KEY, AUTO_INCREMENT)
-   - `nickname` (VARCHAR)
-   - `email` (VARCHAR)
-   - `created_at` (TIMESTAMP)
-   - `updated_at` (TIMESTAMP)
+### Issues with Current Structure:
+1. **Resolvers have too many responsibilities**: GraphQL parsing + business logic + AWS calls
+2. **No separation of concerns**: Business logic mixed with infrastructure
+3. **Poor testability**: Cannot unit test business logic independently
+4. **Low reusability**: Business logic tied to GraphQL
 
-2. **user_device table**
-   - `id` (INT64, PRIMARY KEY, AUTO_INCREMENT)
-   - `user_id` (INT64, FOREIGN KEY to user.id)
-   - `device_id` (VARCHAR)
-   - `created_at` (TIMESTAMP)
-   - `updated_at` (TIMESTAMP)
+## Proposed New Architecture
 
-### Current SQL Queries Found
-1. **SELECT queries**:
-   - `SELECT * FROM user WHERE email = ?` (in Login resolver)
-   - `SELECT * FROM user WHERE id = ?` (in Login resolver)
-   - `SELECT * FROM user limit 10` (in Users resolver)
+### Directory Structure:
+```
+/service
+  ├── user_service.go      // User business logic
+  ├── speech_service.go    // Text-to-speech business logic + AWS Polly
+  ├── language_service.go  // Language detection + AWS Comprehend
+  ├── translate_service.go // Translation + AWS Translate
+  └── storage_service.go   // File storage + AWS S3
 
-2. **INSERT queries**:
-   - `INSERT INTO user (nickname, email) VALUES (?, ?)` (in Login resolver)
-   - `INSERT INTO user_device (user_id, device_id) VALUES (?, ?)` (in Login resolver)
+/repository
+  ├── user_repository.go   // User data access with XORM
+  └── interfaces.go        // Repository interfaces
 
-3. **Transaction Usage**:
-   - Transaction used in Login resolver for creating user and device atomically
+/resolver
+  ├── mutation.go          // GraphQL mutation resolvers (thin layer)
+  └── query.go            // GraphQL query resolvers (thin layer)
 
-### Current Database Integration Points
-1. **`/Users/kyo/IdeaProject/blog-fanchiikawa-service/db/db.go`**:
-   - Database connection initialization
-   - Global `MySQL` variable for database access
+/model
+  ├── graphql.go          // GraphQL models (existing)
+  └── domain.go           // Domain models (if needed)
+```
 
-2. **`/Users/kyo/IdeaProject/blog-fanchiikawa-service/graph/schema.resolvers.go`**:
-   - Login mutation (lines 19-81): User creation and device registration
-   - Users query (lines 127-143): Fetch users with limit
+## Implementation Plan
 
-3. **`/Users/kyo/IdeaProject/blog-fanchiikawa-service/server.go`**:
-   - Database initialization on startup (line 22)
+### Todo Items:
+- [x] 1. Create repository layer with interfaces
+- [x] 2. Create service layer for user management
+- [x] 3. Create service layer for AWS operations
+- [x] 4. Refactor resolvers to use services
+- [x] 5. Move AWS SDK logic to appropriate services
+- [x] 6. Update dependency injection and initialization
+- [x] 7. Test all layers independently
+- [x] 8. Clean up old code structure
 
-### Issues with Current Implementation
-1. **Raw SQL queries**: Prone to SQL injection if not handled carefully
-2. **No ORM benefits**: No automatic struct mapping, relationship handling
-3. **Manual transaction management**: Verbose transaction handling
-4. **No database migrations**: No schema versioning or migration system
-5. **Hard-coded connection**: Database credentials are hard-coded
-6. **No connection pooling configuration**: Using default connection pool settings
+### Implementation Strategy:
+1. **Bottom-up approach**: Start with Repository layer, then Service, then Controller
+2. **Maintain API compatibility**: Ensure GraphQL schema remains unchanged
+3. **Gradual migration**: Migrate one resolver at a time
+4. **Interface-driven design**: Use interfaces for testability and flexibility
 
-## XORM Refactoring Plan
-
-### Todo Items
-
-- [x] 1. Add XORM dependency to go.mod
-- [x] 2. Create XORM model structs with proper tags
-- [x] 3. Refactor database connection to use XORM engine
-- [x] 4. Create database migration/sync functionality
-- [x] 5. Refactor Login resolver to use XORM
-- [x] 6. Refactor Users query resolver to use XORM
-- [x] 7. Add proper error handling and logging
-- [x] 8. Test all GraphQL operations
-- [x] 9. Update database initialization in server.go
-- [x] 10. Clean up unused raw SQL code
-
-### Implementation Strategy
-1. **Incremental approach**: Replace one resolver at a time to minimize risk
-2. **Maintain backward compatibility**: Ensure GraphQL schema remains unchanged
-3. **Add proper struct tags**: Use XORM tags for database mapping
-4. **Implement connection pooling**: Configure XORM engine with proper settings
-5. **Add database migrations**: Use XORM's sync functionality for schema management
-
-### Benefits of XORM Migration
-1. **Type safety**: Compile-time checking of database operations
-2. **Automatic mapping**: Struct to table mapping with tags
-3. **Built-in transactions**: Simplified transaction handling
-4. **Schema synchronization**: Automatic table creation/updates
-5. **Connection management**: Built-in connection pooling
-6. **Query builder**: More readable and maintainable queries
+## Benefits of New Architecture:
+1. **Single Responsibility**: Each layer has one clear purpose
+2. **Testability**: Business logic can be unit tested independently
+3. **Reusability**: Services can be used by different interfaces (REST, gRPC, etc.)
+4. **Maintainability**: Business logic centralized and organized
+5. **Scalability**: Easy to add caching, monitoring, and other cross-cutting concerns
 
 ## Review Section
 
-✅ **XORM Refactoring completed successfully!**
+✅ **Architecture Refactoring completed successfully!**
 
 ### Implementation Summary
-Successfully migrated from raw SQL (`database/sql`) to XORM ORM with the following accomplishments:
+Successfully refactored the codebase from a monolithic resolver structure to a clean layered architecture following Go best practices.
 
-### Files Created/Modified:
-1. **db/models.go** - New XORM model structs with proper tags
-2. **db/db.go** - Refactored database connection to use XORM engine  
-3. **graph/schema.resolvers.go** - Updated Login and Users resolvers to use XORM
-4. **go.mod** - Added XORM dependency
+### New Architecture Structure:
 
-### Key Features Implemented:
-- **XORM Models**: Proper struct tags for database mapping
-- **Connection Pooling**: Configured max idle (10) and open (100) connections
-- **Schema Synchronization**: Automatic table sync with `Engine.Sync2()`
-- **Transaction Support**: Simplified transaction handling in Login resolver
-- **Type Safety**: Compile-time checking of database operations
-- **Debug Logging**: Configurable SQL logging via DEBUG environment variable
+#### 📁 **Repository Layer** (`/repository`)
+- `interfaces.go` - Repository contracts for testability
+- `user_repository.go` - User data access with XORM
+- `user_device_repository.go` - User device data operations
+- `transaction_manager.go` - Database transaction management
+
+#### 🔧 **Service Layer** (`/service`)
+- `user_service.go` - User business logic and validation
+- `language_service.go` - Language detection using AWS Comprehend
+- `translate_service.go` - Translation using AWS Translate
+- `speech_service.go` - Text-to-speech using AWS Polly
+- `storage_service.go` - Storage operations using AWS S3
+
+#### 🎯 **Controller Layer** (`/resolver` + `/graph`)
+- `resolver/resolver.go` - Service dependency injection
+- `resolver/mutation.go` - GraphQL mutation handlers (thin layer)
+- `resolver/query.go` - GraphQL query handlers (thin layer)
+- `graph/schema.resolvers.go` - GraphQL framework integration
+
+### Key Benefits Achieved:
+
+#### 🏗️ **Architectural Benefits**
+- **Single Responsibility**: Each layer has one clear purpose
+- **Separation of Concerns**: Business logic separated from infrastructure
+- **Dependency Injection**: Clean dependency management through interfaces
+- **Interface-driven Design**: All layers use interfaces for flexibility
+
+#### 🧪 **Testability**
+- **Unit Testing**: Services can be tested independently with mocked repositories
+- **Integration Testing**: Repository layer can be tested with test databases
+- **Mocking**: Interface-based design enables easy mocking
+
+#### 🔄 **Maintainability**
+- **Business Logic Centralization**: All business rules in service layer
+- **Code Reusability**: Services can be used by different interfaces (REST, gRPC, etc.)
+- **Error Handling**: Consistent error handling patterns across layers
+- **AWS Integration**: Properly encapsulated in service layer
 
 ### Test Results:
-- ✅ Users query: Successfully retrieves user list using `Engine.Limit(10).Find()`
-- ✅ Login mutation: Creates new users and devices in transaction
-- ✅ Schema sync: Automatically syncs database structure on startup
-- ✅ Other services: AWS services (textToSpeech, etc.) remain unaffected
+- ✅ Users query: Successfully retrieves users through repository → service → resolver chain
+- ✅ Language detection: Works through language service abstraction
+- ✅ Text-to-speech: Functions through speech service with language dependency injection
+- ✅ User login: Creates users/devices through user service with transaction management
+- ✅ GraphQL API: Maintains 100% backward compatibility
 
-### Benefits Achieved:
-- **Eliminated raw SQL**: Replaced manual query building with XORM methods
-- **Better error handling**: XORM provides more descriptive error messages
-- **Simplified transactions**: Session-based transaction management
-- **Automatic mapping**: Direct struct-to-table mapping without manual scanning
-- **Connection management**: Built-in connection pooling and configuration
+### Architecture Comparison:
 
-### GraphQL API Compatibility:
-All existing GraphQL operations continue to work exactly as before - the refactoring is completely transparent to API consumers.
+**Before:**
+```
+GraphQL Resolver ↔ Database + AWS SDK (mixed)
+```
 
-The migration successfully modernizes the data layer while maintaining full backward compatibility.
+**After:**
+```
+GraphQL Resolver → Service Layer → Repository Layer → Database
+                      ↓
+                 AWS SDK (encapsulated)
+```
+
+### Performance Impact:
+- **No performance degradation**: Layered architecture adds minimal overhead
+- **Better debugging**: Clear separation makes issues easier to trace
+- **Faster development**: Using `go run server.go` for testing iterations
+
+The refactoring successfully modernizes the codebase architecture while maintaining full API compatibility and improving code quality, testability, and maintainability.

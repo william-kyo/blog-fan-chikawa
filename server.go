@@ -3,7 +3,10 @@ package main
 import (
 	"blog-fanchiikawa-service/db"
 	"blog-fanchiikawa-service/graph"
+	"blog-fanchiikawa-service/repository"
+	"blog-fanchiikawa-service/resolver"
 	"blog-fanchiikawa-service/sdk"
+	"blog-fanchiikawa-service/service"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +22,7 @@ import (
 const defaultPort = "8080"
 
 func main() {
+	// Initialize infrastructure
 	db.InitMySQL()
 	sdk.InitAWSSession()
 	sdk.InitS3()
@@ -26,12 +30,35 @@ func main() {
 	sdk.InitTranslate()
 	sdk.InitPolly()
 
+	// Initialize repositories
+	userRepo := repository.NewUserRepository()
+	deviceRepo := repository.NewUserDeviceRepository()
+	transactionMgr := repository.NewTransactionManager()
+
+	// Initialize services
+	languageService := service.NewLanguageService()
+	translateService := service.NewTranslateService()
+	speechService := service.NewSpeechService(languageService)
+	storageService := service.NewStorageService()
+	userService := service.NewUserService(userRepo, deviceRepo, transactionMgr)
+
+	// Initialize resolver
+	resolverInstance := resolver.NewResolver(
+		userService,
+		languageService,
+		translateService,
+		speechService,
+		storageService,
+	)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{
+		Resolvers: &graph.Resolver{Resolver: resolverInstance},
+	}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
