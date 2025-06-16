@@ -3,9 +3,7 @@ package service
 import (
 	"blog-fanchiikawa-service/db"
 	"blog-fanchiikawa-service/graph/model"
-	"blog-fanchiikawa-service/greetings"
 	"blog-fanchiikawa-service/repository"
-	"log"
 )
 
 // UserService defines the interface for user business logic
@@ -75,10 +73,6 @@ func (s *userService) Login(nickname, email, deviceID string) (*model.User, erro
 	if err != nil {
 		return nil, err
 	}
-
-	// Log greeting message
-	message, _ := greetings.Hello(newUser.Nickname)
-	log.Println(message)
 
 	return s.convertToGraphQLUser(newUser), nil
 }
