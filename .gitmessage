@@ -1,0 +1,18 @@
+# Commit message template
+# 
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Format: <type>: <subject>
+#
+# <type> can be:
+# feat: A new feature
+# fix: A bug fix
+# docs: Documentation only changes
+# style: Changes that do not affect the meaning of the code
+# refactor: A code change that neither fixes a bug nor adds a feature
+# test: Adding missing tests or correcting existing tests
+# chore: Changes to the build process or auxiliary tools
+#
+# Keep subject line under 50 characters
+# Use imperative mood: "Add feature" not "Added feature"
