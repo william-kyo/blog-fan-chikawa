@@ -20,6 +20,7 @@ const defaultPort = "8080"
 
 func main() {
 	db.InitMySQL()
+	sdk.InitAWSSession()
 	sdk.InitS3()
 	sdk.InitComprehend()
 	sdk.InitTranslate()

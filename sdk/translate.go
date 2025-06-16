@@ -2,23 +2,13 @@ package sdk
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/translate"
 )
 
 var Translate *translate.Translate
 
 func InitTranslate() {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String("ap-northeast-1"),
-		},
-		Profile: "fanchiikawa",
-	})
-	if err != nil {
-		panic(err)
-	}
-	Translate = translate.New(sess)
+	Translate = translate.New(AWSSession)
 }
 
 func TranslateText(text string, sourceLanguage string, targetLanguage string) (string, error) {

@@ -2,23 +2,13 @@ package sdk
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/comprehend"
 )
 
 var Comprehend *comprehend.Comprehend
 
 func InitComprehend() {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String("ap-northeast-1"),
-		},
-		Profile: "fanchiikawa",
-	})
-	if err != nil {
-		panic(err)
-	}
-	Comprehend = comprehend.New(sess)
+	Comprehend = comprehend.New(AWSSession)
 }
 
 func DetectLanguage(text string) (string, error) {

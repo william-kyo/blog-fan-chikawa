@@ -5,24 +5,13 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 var S3 *s3.S3
 
 func InitS3() {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String("ap-northeast-1"),
-		},
-		Profile: "fanchiikawa",
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	S3 = s3.New(sess)
+	S3 = s3.New(AWSSession)
 }
 
 func GetLastData() (string, error) {

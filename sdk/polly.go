@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/polly"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
@@ -13,16 +12,7 @@ import (
 var Polly *polly.Polly
 
 func InitPolly() {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String("ap-northeast-1"),
-		},
-		Profile: "fanchiikawa",
-	})
-	if err != nil {
-		panic(err)
-	}
-	Polly = polly.New(sess)
+	Polly = polly.New(AWSSession)
 }
 
 func TextToSpeech(text, languageCode string) (string, error) {
@@ -46,18 +36,8 @@ func TextToSpeech(text, languageCode string) (string, error) {
 	timestamp := time.Now().Unix()
 	filename := fmt.Sprintf("speech/%d_%s.mp3", timestamp, languageCode)
 
-	// Upload to S3 using the existing session
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region: aws.String("ap-northeast-1"),
-		},
-		Profile: "fanchiikawa",
-	})
-	if err != nil {
-		return "", err
-	}
-
-	uploader := s3manager.NewUploader(sess)
+	// Upload to S3 using the shared session
+	uploader := s3manager.NewUploader(AWSSession)
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String("fan-ai-warehouse"),
 		Key:    aws.String(filename),
