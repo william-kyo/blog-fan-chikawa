@@ -224,11 +224,113 @@ go test -cover ./...
 
 ## 🏗️ Development
 
-### Adding New Features
+### Adding New GraphQL Operations
+
+When adding new GraphQL mutations or queries, follow these steps:
+
+#### 1. **Update GraphQL Schema**
+Edit `graph/schema.graphqls` to add your new operation:
+
+```graphql
+# Add new input types if needed
+input NewFeatureInput {
+  text: String!
+  option: String
+}
+
+# Add to Mutation or Query type
+type Mutation {
+  # ... existing mutations
+  newFeature(input: NewFeatureInput!): String!
+}
+```
+
+#### 2. **Generate GraphQL Code**
+Run gqlgen to generate the required GraphQL code:
+
+```bash
+# Generate GraphQL resolvers and models
+go run github.com/99designs/gqlgen generate
+
+# Alternative: if you have gqlgen installed globally
+gqlgen generate
+```
+
+This will update:
+- `graph/generated.go` - GraphQL execution code
+- `graph/model/models_gen.go` - GraphQL input/output models
+- `graph/schema.resolvers.go` - Resolver method stubs
+
+#### 3. **Implement Business Logic in Service Layer**
+Create or update the appropriate service:
+
+```go
+// service/new_feature_service.go
+func (s *newFeatureService) ProcessNewFeature(input string) (string, error) {
+    // Implement business logic here
+    return result, nil
+}
+```
+
+#### 4. **Create Resolver Implementation**
+Update the resolver to delegate to your service:
+
+```go
+// resolver/mutation.go or resolver/query.go
+func (r *Resolver) NewFeature(ctx context.Context, input model.NewFeatureInput) (string, error) {
+    return r.NewFeatureService.ProcessNewFeature(input.Text)
+}
+```
+
+#### 5. **Update Dependency Injection**
+Add the new service to `server.go`:
+
+```go
+// Initialize new service
+newFeatureService := service.NewNewFeatureService()
+
+// Add to resolver
+resolverInstance := resolver.NewResolver(
+    // ... existing services
+    newFeatureService,
+)
+```
+
+#### 6. **Test Your Changes**
+```bash
+# Build and test
+go run server.go
+
+# Test in GraphQL playground at http://localhost:8080/
+```
+
+### Adding New Features (General)
 1. **Define interfaces** in repository layer if data access needed
 2. **Implement business logic** in service layer
 3. **Create thin resolvers** in controller layer
 4. **Update dependency injection** in server.go
+5. **Generate GraphQL code** if schema changes are needed
+
+### GraphQL Schema Management
+- **Schema Location**: `graph/schema.graphqls`
+- **Generated Models**: `graph/model/models_gen.go`
+- **Resolver Stubs**: `graph/schema.resolvers.go`
+- **Generated Code**: `graph/generated.go`
+
+### Development Commands
+```bash
+# Generate GraphQL code
+go run github.com/99designs/gqlgen generate
+
+# Run application
+go run server.go
+
+# Run tests
+go test ./...
+
+# Build for production
+go build -o blog-fanchiikawa-service
+```
 
 ### Code Style
 - Follow Go conventions and best practices
@@ -236,6 +338,7 @@ go test -cover ./...
 - Keep resolvers thin (delegate to services)
 - Centralize business logic in services
 - Use meaningful error messages
+- Always regenerate GraphQL code after schema changes
 
 ## 📚 Technology Stack
 
