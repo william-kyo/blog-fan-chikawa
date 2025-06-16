@@ -10,74 +10,78 @@ import (
 	"blog-fanchiikawa-service/greetings"
 	"blog-fanchiikawa-service/sdk"
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 )
 
 // Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input model.LoginUser) (*model.User, error) {
-	// If email is in the database, return user info
-	row := db.MySQL.QueryRow("SELECT * FROM user WHERE email = ?", input.Email)
-	var user model.User
-	err := row.Scan(&user.ID, &user.Nickname, &user.Email, &user.CreatedAt, &user.UpdatedAt)
-	if err == nil {
-		// User exists, return the user
-		return &user, nil
-	} else if err != sql.ErrNoRows {
-		// If error is not "no rows", return the error
-		return nil, err
-	}
-
-	// User doesn't exist, create new user
-	var newUser model.User
-	newUser.Nickname = input.Nickname
-	newUser.Email = input.Email
-
-	// Start transaction
-	tx, err := db.MySQL.Begin()
+	// Check if user exists by email
+	var dbUser db.User
+	has, err := db.Engine.Where("email = ?", input.Email).Get(&dbUser)
 	if err != nil {
 		return nil, err
 	}
-	// Defer rollback in case of error
-	defer func() {
-		if err != nil {
-			tx.Rollback()
+
+	if has {
+		// User exists, convert to GraphQL model and return
+		user := &model.User{
+			ID:        dbUser.ID,
+			Nickname:  dbUser.Nickname,
+			Email:     dbUser.Email,
+			CreatedAt: dbUser.CreatedAt,
+			UpdatedAt: dbUser.UpdatedAt,
 		}
-	}()
+		return user, nil
+	}
 
-	// Insert user
-	result, err := tx.Exec("INSERT INTO user (nickname, email) VALUES (?, ?)", newUser.Nickname, newUser.Email)
-	if err != nil {
+	// User doesn't exist, create new user and device in transaction
+	session := db.Engine.NewSession()
+	defer session.Close()
+
+	if err := session.Begin(); err != nil {
 		return nil, err
 	}
 
-	lastInsertId, err := result.LastInsertId()
-	if err != nil {
+	// Create new user
+	newUser := &db.User{
+		Nickname: input.Nickname,
+		Email:    input.Email,
+	}
+
+	if _, err := session.Insert(newUser); err != nil {
+		session.Rollback()
 		return nil, err
 	}
 
-	// Insert device
-	_, err = tx.Exec("INSERT INTO user_device (user_id, device_id) VALUES (?, ?)", lastInsertId, input.DeviceID)
-	if err != nil {
+	// Create user device
+	userDevice := &db.UserDevice{
+		UserID:   newUser.ID,
+		DeviceID: input.DeviceID,
+	}
+
+	if _, err := session.Insert(userDevice); err != nil {
+		session.Rollback()
 		return nil, err
 	}
 
-	// Commit transaction
-	if err = tx.Commit(); err != nil {
+	if err := session.Commit(); err != nil {
 		return nil, err
 	}
 
 	message, _ := greetings.Hello(newUser.Nickname)
 	log.Println(message)
 
-	// Get the newly created user
-	row = db.MySQL.QueryRow("SELECT * FROM user WHERE id = ?", lastInsertId)
-	err = row.Scan(&user.ID, &user.Nickname, &user.Email, &user.CreatedAt, &user.UpdatedAt)
-	if err != nil {
-		return nil, err
+	// Convert to GraphQL model and return
+	user := &model.User{
+		ID:        newUser.ID,
+		Nickname:  newUser.Nickname,
+		Email:     newUser.Email,
+		CreatedAt: newUser.CreatedAt,
+		UpdatedAt: newUser.UpdatedAt,
 	}
-	return &user, nil
+
+	return user, nil
 }
 
 // DetectLanguage is the resolver for the detectLanguage field.
@@ -125,21 +129,25 @@ func (r *mutationResolver) TextToSpeech(ctx context.Context, input model.TextToS
 
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	var users []*model.User
-	rows, err := db.MySQL.Query("SELECT * FROM user limit 10")
+	var dbUsers []db.User
+	err := db.Engine.Limit(10).Find(&dbUsers)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var u model.User
-		err := rows.Scan(&u.ID, &u.Nickname, &u.Email, &u.CreatedAt, &u.UpdatedAt)
-		if err != nil {
-			return nil, err
+	// Convert database models to GraphQL models
+	var users []*model.User
+	for _, dbUser := range dbUsers {
+		user := &model.User{
+			ID:        dbUser.ID,
+			Nickname:  dbUser.Nickname,
+			Email:     dbUser.Email,
+			CreatedAt: dbUser.CreatedAt,
+			UpdatedAt: dbUser.UpdatedAt,
 		}
-		users = append(users, &u)
+		users = append(users, user)
 	}
+
 	return users, nil
 }
 

@@ -8,6 +8,9 @@
 *.so
 *.dylib
 
+# Project binary
+blog-fanchiikawa-service
+
 # Test binary, built with `go test -c`
 *.test
 
