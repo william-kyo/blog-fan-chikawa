@@ -23,6 +23,7 @@ func main() {
 	sdk.InitS3()
 	sdk.InitComprehend()
 	sdk.InitTranslate()
+	sdk.InitPolly()
 
 	port := os.Getenv("PORT")
 	if port == "" {

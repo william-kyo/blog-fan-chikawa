@@ -32,12 +32,17 @@ input TranslateText {
   targetLanguage: String!
 }
 
+input TextToSpeech {
+  text: String!
+}
+
 
 type Mutation {
   login(input: LoginUser!): User!
   detectLanguage(input: String!): String!
   detectSentiment(input: String!): String!
   translateText(input: TranslateText): String!
+  textToSpeech(input: TextToSpeech!): String!
 }
 
 type Query {

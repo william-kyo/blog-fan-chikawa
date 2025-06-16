@@ -11,6 +11,7 @@ import (
 	"blog-fanchiikawa-service/sdk"
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 )
 
@@ -104,6 +105,22 @@ func (r *mutationResolver) TranslateText(ctx context.Context, input *model.Trans
 		return "", err
 	}
 	return translatedText, nil
+}
+
+// TextToSpeech is the resolver for the textToSpeech field.
+func (r *mutationResolver) TextToSpeech(ctx context.Context, input model.TextToSpeech) (string, error) {
+	// First detect the language
+	languageCode, err := sdk.DetectLanguage(input.Text)
+	if err != nil {
+		return "", fmt.Errorf("Unable to detect language type")
+	}
+
+	// Generate speech and upload to S3
+	s3Key, err := sdk.TextToSpeech(input.Text, languageCode)
+	if err != nil {
+		return "", err
+	}
+	return s3Key, nil
 }
 
 // Users is the resolver for the users field.

@@ -26,10 +26,11 @@ func InitS3() {
 }
 
 func GetLastData() (string, error) {
+	prefix := "warehouse/"
 	// Get the last date from S3 bucket
 	result, err := S3.ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket:    aws.String("fan-ai-warehouse"),
-		Prefix:    aws.String(""),
+		Prefix:    aws.String(prefix),
 		Delimiter: aws.String("/"), // 使用分隔符来只获取文件夹
 	})
 	if err != nil {
@@ -50,7 +51,8 @@ func GetLastData() (string, error) {
 	lastFolder := result.CommonPrefixes[len(result.CommonPrefixes)-1].Prefix
 
 	// Remove trailing slash
-	folderName := strings.TrimSuffix(*lastFolder, "/")
+	folderName := strings.TrimPrefix(*lastFolder, prefix)
+	folderName = strings.TrimSuffix(folderName, "/")
 
 	return folderName, nil
 }

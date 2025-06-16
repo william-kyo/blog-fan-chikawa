@@ -52,6 +52,7 @@ type ComplexityRoot struct {
 		DetectLanguage  func(childComplexity int, input string) int
 		DetectSentiment func(childComplexity int, input string) int
 		Login           func(childComplexity int, input model.LoginUser) int
+		TextToSpeech    func(childComplexity int, input model.TextToSpeech) int
 		TranslateText   func(childComplexity int, input *model.TranslateText) int
 	}
 
@@ -82,6 +83,7 @@ type MutationResolver interface {
 	DetectLanguage(ctx context.Context, input string) (string, error)
 	DetectSentiment(ctx context.Context, input string) (string, error)
 	TranslateText(ctx context.Context, input *model.TranslateText) (string, error)
+	TextToSpeech(ctx context.Context, input model.TextToSpeech) (string, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
@@ -142,6 +144,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(model.LoginUser)), true
+
+	case "Mutation.textToSpeech":
+		if e.complexity.Mutation.TextToSpeech == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_textToSpeech_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.TextToSpeech(childComplexity, args["input"].(model.TextToSpeech)), true
 
 	case "Mutation.translateText":
 		if e.complexity.Mutation.TranslateText == nil {
@@ -248,6 +262,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputLoginUser,
+		ec.unmarshalInputTextToSpeech,
 		ec.unmarshalInputTranslateText,
 	)
 	first := true
@@ -431,6 +446,29 @@ func (ec *executionContext) field_Mutation_login_argsInput(
 	}
 
 	var zeroVal model.LoginUser
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_textToSpeech_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_textToSpeech_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_textToSpeech_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.TextToSpeech, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNTextToSpeech2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐTextToSpeech(ctx, tmp)
+	}
+
+	var zeroVal model.TextToSpeech
 	return zeroVal, nil
 }
 
@@ -806,6 +844,61 @@ func (ec *executionContext) fieldContext_Mutation_translateText(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_translateText_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_textToSpeech(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_textToSpeech(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().TextToSpeech(rctx, fc.Args["input"].(model.TextToSpeech))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_textToSpeech(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_textToSpeech_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3475,6 +3568,33 @@ func (ec *executionContext) unmarshalInputLoginUser(ctx context.Context, obj any
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTextToSpeech(ctx context.Context, obj any) (model.TextToSpeech, error) {
+	var it model.TextToSpeech
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Text = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTranslateText(ctx context.Context, obj any) (model.TranslateText, error) {
 	var it model.TranslateText
 	asMap := map[string]any{}
@@ -3567,6 +3687,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "translateText":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_translateText(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "textToSpeech":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_textToSpeech(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -4192,6 +4319,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNTextToSpeech2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐTextToSpeech(ctx context.Context, v any) (model.TextToSpeech, error) {
+	res, err := ec.unmarshalInputTextToSpeech(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {

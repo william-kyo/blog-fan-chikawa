@@ -18,6 +18,10 @@ type Mutation struct {
 type Query struct {
 }
 
+type TextToSpeech struct {
+	Text string `json:"text"`
+}
+
 type TranslateText struct {
 	Text           string `json:"text"`
 	SourceLanguage string `json:"sourceLanguage"`
