@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.55.7
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/vektah/gqlparser/v2 v2.5.26
+	xorm.io/xorm v1.3.9
 )
 
 require (
@@ -25,5 +26,4 @@ require (
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	xorm.io/builder v0.3.11-0.20220531020008-1bd24a7dc978 // indirect
-	xorm.io/xorm v1.3.9 // indirect
 )

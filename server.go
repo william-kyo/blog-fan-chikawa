@@ -5,6 +5,7 @@ import (
 	"blog-fanchiikawa-service/graph"
 	"blog-fanchiikawa-service/repository"
 	"blog-fanchiikawa-service/resolver"
+	"blog-fanchiikawa-service/scheduler"
 	"blog-fanchiikawa-service/sdk"
 	"blog-fanchiikawa-service/service"
 	"log"
@@ -50,6 +51,11 @@ func main() {
 		speechService,
 		storageService,
 	)
+
+	// Initialize Scheduler
+	scheduler := scheduler.NewScheduler()
+	defer scheduler.Shutdown()
+	scheduler.DataSync()
 
 	port := os.Getenv("PORT")
 	if port == "" {
