@@ -12,21 +12,26 @@ import (
 type MediaService interface {
 	CreateImage(filename, originFilename, bucket, objectKey string, uploaded bool) error
 	DetectAndSaveImageLabels() error
+	DetectAndSaveImageText() error
 }
 
 type mediaService struct {
-	imageRepo      repository.ImageRepository
-	labelRepo      repository.LabelRepository
-	imageLabelRepo repository.ImageLabelRepository
-	transactionMgr repository.TransactionManager
+	imageRepo            repository.ImageRepository
+	labelRepo            repository.LabelRepository
+	imageLabelRepo       repository.ImageLabelRepository
+	textKeywordRepo      repository.TextKeywordRepository
+	imageTextKeywordRepo repository.ImageTextKeywordRepository
+	transactionMgr       repository.TransactionManager
 }
 
-func NewMediaService(imageRepo repository.ImageRepository, labelRepo repository.LabelRepository, imageLabelRepo repository.ImageLabelRepository, transactionMgr repository.TransactionManager) MediaService {
+func NewMediaService(imageRepo repository.ImageRepository, labelRepo repository.LabelRepository, imageLabelRepo repository.ImageLabelRepository, textKeywordRepo repository.TextKeywordRepository, imageTextKeywordRepo repository.ImageTextKeywordRepository, transactionMgr repository.TransactionManager) MediaService {
 	return &mediaService{
-		imageRepo:      imageRepo,
-		labelRepo:      labelRepo,
-		imageLabelRepo: imageLabelRepo,
-		transactionMgr: transactionMgr,
+		imageRepo:            imageRepo,
+		labelRepo:            labelRepo,
+		imageLabelRepo:       imageLabelRepo,
+		textKeywordRepo:      textKeywordRepo,
+		imageTextKeywordRepo: imageTextKeywordRepo,
+		transactionMgr:       transactionMgr,
 	}
 }
 
@@ -150,6 +155,126 @@ func (s *mediaService) SaveImageLabels(id int64, labels []string) error {
 		}
 
 		log.Printf("Successfully saved %d labels for image ID: %d", len(labels), id)
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Transaction failed for image ID: %d: %v", id, err)
+	} else {
+		log.Printf("SaveImageLabels completed successfully for image ID: %d", id)
+	}
+
+	return err
+}
+
+func (s *mediaService) DetectAndSaveImageText() error {
+	undetectedImages, err := s.imageRepo.GetByTextDetected(false)
+	if err != nil {
+		return fmt.Errorf("failed to fetch undetected image text")
+	}
+
+	log.Printf("Found %d undetected images to process text", len(undetectedImages))
+	for _, image := range undetectedImages {
+		log.Printf("Processing image ID: %d, Bucket: %s, ObjectKey: %s", image.ID, image.Bucket, image.ObjectKey)
+
+		textKeywords, err := sdk.DetectText(image.Bucket, image.ObjectKey)
+		if err != nil {
+			log.Printf("Failed to detect text for image ID %d: %v", image.ID, err)
+			continue // Continue processing other images instead of returning error directly
+		}
+
+		err = s.SaveImageTextKeywords(image.ID, textKeywords)
+		if err != nil {
+			log.Printf("Failed to save text for image ID %d: %v", image.ID, err)
+			continue // Continue processing other images
+		}
+	}
+
+	return nil
+}
+
+func (s *mediaService) SaveImageTextKeywords(id int64, textKeywords []string) error {
+	log.Printf("Starting SaveImageTextKeywords for image ID: %d with %d textKeywords: %v", id, len(textKeywords), textKeywords)
+
+	// Remove duplicate textKeywords
+	uniqueLabels := make(map[string]bool)
+	var deduplicatedLabels []string
+	for _, label := range textKeywords {
+		if !uniqueLabels[label] {
+			uniqueLabels[label] = true
+			deduplicatedLabels = append(deduplicatedLabels, label)
+		}
+	}
+	textKeywords = deduplicatedLabels
+	log.Printf("After deduplication: %d unique textKeywords: %v", len(textKeywords), textKeywords)
+
+	if len(textKeywords) == 0 {
+		log.Printf("No textKeywords detected for image ID: %d, marking as detected", id)
+		affected, err := s.imageRepo.UpdateTextDetected(id, true)
+		if affected == 0 {
+			log.Printf("Failed to update image ID: %d", id)
+		}
+		return err
+	}
+
+	err := s.transactionMgr.WithTransaction(func() error {
+		for _, keyword := range textKeywords {
+			log.Printf("Processing textKeywords '%s' for image ID: %d", keyword, id)
+
+			// Check if keyword exists
+			k, err := s.textKeywordRepo.GetByKeyword(keyword)
+			if err != nil {
+				log.Printf("Error getting keyword '%s': %v", keyword, err)
+				return err
+			}
+
+			// If keyword doesn't exist, create new keyword
+			if k == nil {
+				log.Printf("Keyword '%s' not found, creating new keyword", keyword)
+				newKeyword := &db.TextKeyword{Keyword: keyword}
+				err = s.textKeywordRepo.Create(newKeyword)
+				if err != nil {
+					log.Printf("Failed to create label '%s': %v", keyword, err)
+					return err
+				}
+				k = newKeyword
+			}
+
+			// Check if same image-keyword relationship already exists
+			existingRelation, err := s.imageTextKeywordRepo.GetByImageAndKeyword(id, k.ID)
+			if err != nil {
+				log.Printf("Error checking existing image-keyword relationship: %v", err)
+				return err
+			}
+			if existingRelation != nil {
+				log.Printf("Image-keyword relationship already exists: ImageID=%d, KeyWordID=%d, skipping", id, k.ID)
+				continue // Skip existing relationship
+			}
+
+			log.Printf("Creating image-keyword relationship: ImageID=%d, KeyWordID=%d", id, k.ID)
+			err = s.imageTextKeywordRepo.Create(&db.ImageTextKeyword{
+				ImageID:       id,
+				TextKeywordId: k.ID,
+			})
+			if err != nil {
+				log.Printf("Failed to create image-keyword relationship: %v", err)
+				return err
+			}
+		}
+
+		// After all keywords are saved, mark image as detected
+		log.Printf("All textKeywords saved, marking image ID: %d as textKeywords detected", id)
+		affected, err := s.imageRepo.UpdateTextDetected(id, true)
+		if affected == 0 {
+			log.Printf("Warning: UpdateTextDetected affected 0 rows for image ID: %d", id)
+			return errors.New("failed to update image text_detected status")
+		}
+		if err != nil {
+			log.Printf("Error updating text_detected status for image ID: %d: %v", id, err)
+			return err
+		}
+
+		log.Printf("Successfully saved %d textKeywords for image ID: %d", len(textKeywords), id)
 		return nil
 	})
 

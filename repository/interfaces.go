@@ -34,6 +34,10 @@ type ImageRepository interface {
 	UpdateLabelDetected(id int64, labelDetected bool) (int64, error)
 
 	GetByLabelDetected(labelDetected bool) ([]*db.Image, error)
+
+	UpdateTextDetected(id int64, textDetected bool) (int64, error)
+
+	GetByTextDetected(textDetected bool) ([]*db.Image, error)
 }
 
 type LabelRepository interface {
@@ -45,6 +49,18 @@ type LabelRepository interface {
 type ImageLabelRepository interface {
 	Create(imageLabel *db.ImageLabel) error
 	GetByImageAndLabel(imageID, labelID int64) (*db.ImageLabel, error)
+}
+
+type TextKeywordRepository interface {
+	Create(textKeyword *db.TextKeyword) error
+
+	GetByKeyword(keyword string) (*db.TextKeyword, error)
+}
+
+type ImageTextKeywordRepository interface {
+	Create(imageTextKeyword *db.ImageTextKeyword) error
+
+	GetByImageAndKeyword(imageID, textKeywordID int64) (*db.ImageTextKeyword, error)
 }
 
 // TransactionManager defines the interface for transaction management

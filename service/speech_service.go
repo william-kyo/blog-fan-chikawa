@@ -32,7 +32,7 @@ func (s *speechService) TextToSpeech(text string) (string, error) {
 	// First detect the language
 	languageCode, err := s.languageService.DetectLanguage(text)
 	if err != nil {
-		return "", fmt.Errorf("Unable to detect language type")
+		return "", fmt.Errorf("unable to detect language type")
 	}
 
 	// Generate speech and upload to S3

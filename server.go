@@ -38,6 +38,8 @@ func main() {
 	imageRepo := repository.NewImageReposity()
 	labelRepo := repository.NewLabelRepository()
 	imageLabelRepo := repository.NewImageLabelRepository()
+	textKeywordRepo := repository.NewTextKeywordRepository()
+	imageTextKeywordRepo := repository.NewImageTextKeywordRepository()
 	transactionMgr := repository.NewTransactionManager()
 
 	// Initialize services
@@ -46,7 +48,7 @@ func main() {
 	speechService := service.NewSpeechService(languageService)
 	storageService := service.NewStorageService()
 	userService := service.NewUserService(userRepo, deviceRepo, transactionMgr)
-	mediaService := service.NewMediaService(imageRepo, labelRepo, imageLabelRepo, transactionMgr)
+	mediaService := service.NewMediaService(imageRepo, labelRepo, imageLabelRepo, textKeywordRepo, imageTextKeywordRepo, transactionMgr)
 
 	// Initialize resolver
 	resolverInstance := resolver.NewResolver(
@@ -60,8 +62,9 @@ func main() {
 	// Initialize Scheduler
 	scheduler := scheduler.NewScheduler(mediaService)
 	defer scheduler.Shutdown()
-	scheduler.DataSync()
+	scheduler.ImageSync()
 	scheduler.ImageLabelDetect()
+	scheduler.ImageTextDetect()
 
 	port := os.Getenv("PORT")
 	if port == "" {

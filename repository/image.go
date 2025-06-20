@@ -34,3 +34,14 @@ func (r *imageRepository) GetByLabelDetected(labelDetected bool) ([]*db.Image, e
 	err := db.Engine.Where("label_detected = ?", labelDetected).Find(&images)
 	return images, err
 }
+
+func (r *imageRepository) UpdateTextDetected(id int64, textDetected bool) (int64, error) {
+	affected, err := db.Engine.ID(id).Cols("text_detected").Update(&db.Image{TextDetected: textDetected})
+	return affected, err
+}
+
+func (r *imageRepository) GetByTextDetected(textDetected bool) ([]*db.Image, error) {
+	var images []*db.Image
+	err := db.Engine.Where("text_detected = ?", textDetected).Find(&images)
+	return images, err
+}

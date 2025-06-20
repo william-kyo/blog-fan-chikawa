@@ -12,7 +12,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 )
 
-func (scheduler *Scheduler) DataSync() {
+func (scheduler *Scheduler) ImageSync() {
 	scheduler.ScheduleAtFixedRate("dataSync", func() {
 		log.Println("Data sync starting...")
 		rootDir := os.Getenv("IMAGE_DIR")

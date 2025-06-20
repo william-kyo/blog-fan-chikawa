@@ -76,3 +76,47 @@ func DetectLabels(bucketName, objectKey string) ([]string, error) {
 
 	return results, nil
 }
+
+func DetectText(bucketName, objectKey string) ([]string, error) {
+	// Build detect text request
+	input := &rekognition.DetectTextInput{
+		Image: &rekognition.Image{
+			S3Object: &rekognition.S3Object{
+				Bucket: aws.String(bucketName),
+				Name:   aws.String(objectKey),
+			},
+		},
+	}
+
+	// Call API
+	result, err := Rekognition.DetectText(input)
+	if err != nil {
+		log.Printf("Failed to call DetectText: %v", err)
+		return nil, fmt.Errorf("failed to call detect text: %w", err)
+	}
+
+	// Output results
+	log.Printf("Image: s3://%s/%s\n", bucketName, objectKey)
+	log.Printf("Detected %d text detections:\n\n", len(result.TextDetections))
+
+	var results []string
+	for i, textDetection := range result.TextDetections {
+		// Only process word-level detections, skip line-level
+		if *textDetection.Type == "WORD" {
+			log.Printf("%d. Text: %s (Confidence: %.2f%%)\n",
+				i+1, *textDetection.DetectedText, *textDetection.Confidence)
+
+			results = append(results, *textDetection.DetectedText)
+
+			// If there are bounding box information, print them too
+			if textDetection.Geometry != nil && textDetection.Geometry.BoundingBox != nil {
+				bbox := textDetection.Geometry.BoundingBox
+				log.Printf("   - Bounding box: (%.3f, %.3f, %.3f, %.3f)\n",
+					*bbox.Left, *bbox.Top, *bbox.Width, *bbox.Height)
+			}
+		}
+		log.Println()
+	}
+
+	return results, nil
+}

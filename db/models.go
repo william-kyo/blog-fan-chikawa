@@ -40,6 +40,7 @@ type Image struct {
 	ObjectKey      string    `xorm:"'object_key' varchar(255) notnull" json:"objectKey"`
 	Uploaded       bool      `xorm:"'uploaded' tinyint(1) notnull default(0)" json:"uploaded"`
 	LabelDetected  bool      `xorm:"'label_detected' tinyint(1) notnull default(0)" json:"labelDetected"`
+	TextDetected   bool      `xorm:"'text_detected' tinyint(1) notnull default(0)" json:"textDetected"`
 	CreatedAt      time.Time `xorm:"'created_at' created" json:"createdAt"`
 	UpdatedAt      time.Time `xorm:"'updated_at' updated" json:"updatedAt"`
 }
@@ -69,4 +70,27 @@ type ImageLabel struct {
 
 func (ImageLabel) TableName() string {
 	return "image_label"
+}
+
+type TextKeyword struct {
+	ID        int64     `xorm:"pk autoincr 'id'" json:"id"`
+	Keyword   string    `xorm:"varchar(255) notnull unique 'keyword'" json:"keyword"`
+	CreatedAt time.Time `xorm:"created 'created_at'" json:"createdAt"`
+	UpdatedAt time.Time `xorm:"updated 'updated_at'" json:"updatedAt"`
+}
+
+func (TextKeyword) TableName() string {
+	return "text_keyword"
+}
+
+type ImageTextKeyword struct {
+	ID            int64     `xorm:"pk autoincr 'id'" json:"id"`
+	ImageID       int64     `xorm:"notnull 'image_id' unique(image_text_keyword)" json:"imageId"`
+	TextKeywordId int64     `xorm:"notnull 'text_keyword_id' unique(image_text_keyword)" json:"text_keyword_id"`
+	CreatedAt     time.Time `xorm:"created 'created_at'" json:"createdAt"`
+	UpdatedAt     time.Time `xorm:"updated 'updated_at'" json:"updatedAt"`
+}
+
+func (ImageTextKeyword) TableName() string {
+	return "image_text_keyword"
 }
