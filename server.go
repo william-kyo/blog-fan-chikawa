@@ -30,11 +30,14 @@ func main() {
 	sdk.InitComprehend()
 	sdk.InitTranslate()
 	sdk.InitPolly()
+	sdk.InitRekognition()
 
 	// Initialize repositories
 	userRepo := repository.NewUserRepository()
 	deviceRepo := repository.NewUserDeviceRepository()
 	imageRepo := repository.NewImageReposity()
+	labelRepo := repository.NewLabelRepository()
+	imageLabelRepo := repository.NewImageLabelRepository()
 	transactionMgr := repository.NewTransactionManager()
 
 	// Initialize services
@@ -43,7 +46,7 @@ func main() {
 	speechService := service.NewSpeechService(languageService)
 	storageService := service.NewStorageService()
 	userService := service.NewUserService(userRepo, deviceRepo, transactionMgr)
-	mediaService := service.NewMediaService(imageRepo)
+	mediaService := service.NewMediaService(imageRepo, labelRepo, imageLabelRepo, transactionMgr)
 
 	// Initialize resolver
 	resolverInstance := resolver.NewResolver(
@@ -58,6 +61,7 @@ func main() {
 	scheduler := scheduler.NewScheduler(mediaService)
 	defer scheduler.Shutdown()
 	scheduler.DataSync()
+	scheduler.ImageLabelDetect()
 
 	port := os.Getenv("PORT")
 	if port == "" {

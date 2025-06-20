@@ -29,7 +29,22 @@ type UserDeviceRepository interface {
 type ImageRepository interface {
 	Create(image *db.Image) error
 
-	GetByID(id int64) ([]*db.Image, error)
+	GetByID(id int64) (*db.Image, error)
+
+	UpdateLabelDetected(id int64, labelDetected bool) (int64, error)
+
+	GetByLabelDetected(labelDetected bool) ([]*db.Image, error)
+}
+
+type LabelRepository interface {
+	Create(label *db.Label) error
+
+	GetByName(labelName string) (*db.Label, error)
+}
+
+type ImageLabelRepository interface {
+	Create(imageLabel *db.ImageLabel) error
+	GetByImageAndLabel(imageID, labelID int64) (*db.ImageLabel, error)
 }
 
 // TransactionManager defines the interface for transaction management

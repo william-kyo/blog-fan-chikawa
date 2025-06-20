@@ -88,12 +88,13 @@ func (scheduler *Scheduler) DataSync() {
 			}
 
 			for _, i := range images {
-				if uploadmap[i.Filename].Error != nil {
+				uploadResult := uploadmap[i.Filename]
+				if uploadResult.Error != nil {
 					i.Uploaded = false
 				} else {
 					i.Uploaded = true
 				}
-				scheduler.mediaService.CreateImage(i.Filename, i.OriginFilename, i.Uploaded)
+				scheduler.mediaService.CreateImage(i.Filename, i.OriginFilename, uploadResult.S3Bucket, uploadResult.S3Key, i.Uploaded)
 			}
 
 			// Clean directory

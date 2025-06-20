@@ -54,6 +54,7 @@ func GetLastData() (string, error) {
 
 type UploadResult struct {
 	Filename string
+	S3Bucket string
 	S3Key    string
 	Error    error
 }
@@ -76,6 +77,7 @@ func UploadMultipleFiles(uploadfiles []string) []UploadResult {
 				err := UploadFile(s3Key, filename)
 				ret <- UploadResult{
 					Filename: filename,
+					S3Bucket: bucket,
 					S3Key:    s3Key,
 					Error:    err,
 				}

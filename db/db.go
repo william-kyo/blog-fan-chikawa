@@ -56,5 +56,5 @@ func InitMySQL() {
 
 // SyncSchema synchronizes the database schema with the model structs
 func SyncSchema() error {
-	return Engine.Sync2(new(User), new(UserDevice), new(Image))
+	return Engine.Sync2(new(User), new(UserDevice), new(Image), new(Label), new(ImageLabel))
 }
