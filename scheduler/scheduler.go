@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"blog-fanchiikawa-service/service"
 	"context"
 	"fmt"
 	"sync"
@@ -8,10 +9,11 @@ import (
 )
 
 type Scheduler struct {
-	tasks  map[string]*ScheduledTask
-	mutex  sync.RWMutex
-	ctx    context.Context
-	cancel context.CancelFunc
+	tasks        map[string]*ScheduledTask
+	mutex        sync.RWMutex
+	ctx          context.Context
+	cancel       context.CancelFunc
+	mediaService service.MediaService
 }
 
 type ScheduledTask struct {
@@ -22,12 +24,13 @@ type ScheduledTask struct {
 	done     chan bool
 }
 
-func NewScheduler() *Scheduler {
+func NewScheduler(mediaService service.MediaService) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Scheduler{
-		tasks:  make(map[string]*ScheduledTask),
-		ctx:    ctx,
-		cancel: cancel,
+		tasks:        make(map[string]*ScheduledTask),
+		ctx:          ctx,
+		cancel:       cancel,
+		mediaService: mediaService,
 	}
 }
 

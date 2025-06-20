@@ -32,7 +32,7 @@ func InitMySQL() {
 	// Configure XORM engine
 	Engine.SetMaxIdleConns(10)
 	Engine.SetMaxOpenConns(100)
-	
+
 	// Set log level based on environment
 	if os.Getenv("DEBUG") == "true" {
 		Engine.SetLogLevel(xormlog.LOG_DEBUG)
@@ -56,5 +56,5 @@ func InitMySQL() {
 
 // SyncSchema synchronizes the database schema with the model structs
 func SyncSchema() error {
-	return Engine.Sync2(new(User), new(UserDevice))
+	return Engine.Sync2(new(User), new(UserDevice), new(Image))
 }

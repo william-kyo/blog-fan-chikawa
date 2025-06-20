@@ -11,8 +11,8 @@ Based on AWS AI hands-on learning plan, master major AWS AI services using Go la
 - [ ] Master Rekognition & Textract
 
 ### Specific Tasks
-- [ ] Write image upload interface
-- [ ] Call Rekognition for face detection and label recognition
+- [x] Write image upload schedule task
+- [ ] Call Rekognition for text detection and label recognition
 - [ ] Call Textract for OCR extraction
 - [ ] Return structured JSON data
 

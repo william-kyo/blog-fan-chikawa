@@ -6,13 +6,13 @@ import "blog-fanchiikawa-service/db"
 type UserRepository interface {
 	// GetByEmail retrieves a user by email address
 	GetByEmail(email string) (*db.User, error)
-	
+
 	// GetByID retrieves a user by ID
 	GetByID(id int64) (*db.User, error)
-	
+
 	// Create creates a new user
 	Create(user *db.User) error
-	
+
 	// List retrieves users with pagination
 	List(limit int, offset int) ([]*db.User, error)
 }
@@ -21,9 +21,15 @@ type UserRepository interface {
 type UserDeviceRepository interface {
 	// Create creates a new user device
 	Create(device *db.UserDevice) error
-	
+
 	// GetByUserID retrieves devices for a user
 	GetByUserID(userID int64) ([]*db.UserDevice, error)
+}
+
+type ImageRepository interface {
+	Create(image *db.Image) error
+
+	GetByID(id int64) ([]*db.Image, error)
 }
 
 // TransactionManager defines the interface for transaction management

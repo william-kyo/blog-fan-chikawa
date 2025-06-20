@@ -34,6 +34,7 @@ func main() {
 	// Initialize repositories
 	userRepo := repository.NewUserRepository()
 	deviceRepo := repository.NewUserDeviceRepository()
+	imageRepo := repository.NewImageReposity()
 	transactionMgr := repository.NewTransactionManager()
 
 	// Initialize services
@@ -42,6 +43,7 @@ func main() {
 	speechService := service.NewSpeechService(languageService)
 	storageService := service.NewStorageService()
 	userService := service.NewUserService(userRepo, deviceRepo, transactionMgr)
+	mediaService := service.NewMediaService(imageRepo)
 
 	// Initialize resolver
 	resolverInstance := resolver.NewResolver(
@@ -53,7 +55,7 @@ func main() {
 	)
 
 	// Initialize Scheduler
-	scheduler := scheduler.NewScheduler()
+	scheduler := scheduler.NewScheduler(mediaService)
 	defer scheduler.Shutdown()
 	scheduler.DataSync()
 

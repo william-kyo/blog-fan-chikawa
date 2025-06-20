@@ -31,3 +31,16 @@ type UserDevice struct {
 func (UserDevice) TableName() string {
 	return "user_device"
 }
+
+type Image struct {
+	ID             int64     `xorm:"pk autoincr 'id'" json:"id"`
+	Filename       string    `xorm:"varchar(255) notnull 'filename'" json:"filename"`
+	OriginFilename string    `xorm:"varchar(255) notnull 'origin_filename'" json:"originFilename"`
+	Uploaded       bool      `xorm:"tinyint(1) notnull 'uploaded'" json:"uploaded"`
+	CreatedAt      time.Time `xorm:"created 'created_at'" json:"createdAt"`
+	UpdatedAt      time.Time `xorm:"updated 'updated_at'" json:"updatedAt"`
+}
+
+func (Image) TableName() string {
+	return "image"
+}
