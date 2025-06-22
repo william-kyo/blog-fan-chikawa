@@ -71,6 +71,7 @@ func (scheduler *Scheduler) ImageSync() {
 				image := &db.Image{
 					Filename:       newname,
 					OriginFilename: f,
+					FileExtension:  ext,
 				}
 				images[i] = image
 			}
@@ -94,7 +95,7 @@ func (scheduler *Scheduler) ImageSync() {
 				} else {
 					i.Uploaded = true
 				}
-				scheduler.mediaService.CreateImage(i.Filename, i.OriginFilename, uploadResult.S3Bucket, uploadResult.S3Key, i.Uploaded)
+				scheduler.mediaService.CreateImage(i.Filename, i.OriginFilename, i.FileExtension, uploadResult.S3Bucket, uploadResult.S3Key, i.Uploaded)
 			}
 
 			// Clean directory

@@ -36,6 +36,7 @@ type Image struct {
 	ID             int64     `xorm:"'id' pk autoincr" json:"id"`
 	Filename       string    `xorm:"'filename' varchar(255) notnull" json:"filename"`
 	OriginFilename string    `xorm:"'origin_filename' varchar(255) notnull" json:"originFilename"`
+	FileExtension  string    `xorm:"'file_extension' varchar(10) notnull" json:"fileExtension"`
 	Bucket         string    `xorm:"'bucket' varchar(255) notnull" json:"bucket"`
 	ObjectKey      string    `xorm:"'object_key' varchar(255) notnull" json:"objectKey"`
 	Uploaded       bool      `xorm:"'uploaded' tinyint(1) notnull default(0)" json:"uploaded"`

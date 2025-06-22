@@ -7,10 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 )
 
 type MediaService interface {
-	CreateImage(filename, originFilename, bucket, objectKey string, uploaded bool) error
+	CreateImage(filename, originFilename, fileExtension, bucket, objectKey string, uploaded bool) error
 	DetectAndSaveImageLabels() error
 	DetectAndSaveImageText() error
 }
@@ -35,10 +36,11 @@ func NewMediaService(imageRepo repository.ImageRepository, labelRepo repository.
 	}
 }
 
-func (s *mediaService) CreateImage(filename, originFilename, bucket, objectKey string, uploaded bool) error {
+func (s *mediaService) CreateImage(filename, originFilename, fileExtension, bucket, objectKey string, uploaded bool) error {
 	newImage := &db.Image{
 		Filename:       filename,
 		OriginFilename: originFilename,
+		FileExtension:  fileExtension,
 		Bucket:         bucket,
 		ObjectKey:      objectKey,
 		Uploaded:       uploaded,
@@ -173,20 +175,43 @@ func (s *mediaService) DetectAndSaveImageText() error {
 		return fmt.Errorf("failed to fetch undetected image text")
 	}
 
-	log.Printf("Found %d undetected images to process text", len(undetectedImages))
+	log.Printf("Found %d undetected files to process text", len(undetectedImages))
 	for _, image := range undetectedImages {
-		log.Printf("Processing image ID: %d, Bucket: %s, ObjectKey: %s", image.ID, image.Bucket, image.ObjectKey)
+		log.Printf("Processing file ID: %d, Extension: %s, Bucket: %s, ObjectKey: %s", 
+			image.ID, image.FileExtension, image.Bucket, image.ObjectKey)
 
-		textKeywords, err := sdk.DetectText(image.Bucket, image.ObjectKey)
+		var textKeywords []string
+		var err error
+
+		// Determine processing method based on file extension
+		fileExt := strings.ToLower(image.FileExtension)
+		if fileExt == ".pdf" {
+			// Use Textract for PDF files
+			log.Printf("Using Textract for PDF file ID: %d", image.ID)
+			textKeywords, err = sdk.DetectDocumentText(image.Bucket, image.ObjectKey)
+		} else if fileExt == ".jpg" || fileExt == ".jpeg" || fileExt == ".png" || fileExt == ".gif" || fileExt == ".bmp" {
+			// Use Rekognition for image files
+			log.Printf("Using Rekognition for image file ID: %d", image.ID)
+			textKeywords, err = sdk.DetectText(image.Bucket, image.ObjectKey)
+		} else {
+			log.Printf("Unsupported file extension %s for file ID: %d, skipping", fileExt, image.ID)
+			// Mark as processed even though we skipped it to avoid reprocessing
+			_, updateErr := s.imageRepo.UpdateTextDetected(image.ID, true)
+			if updateErr != nil {
+				log.Printf("Failed to mark unsupported file as processed: %v", updateErr)
+			}
+			continue
+		}
+
 		if err != nil {
-			log.Printf("Failed to detect text for image ID %d: %v", image.ID, err)
-			continue // Continue processing other images instead of returning error directly
+			log.Printf("Failed to detect text for file ID %d: %v", image.ID, err)
+			continue // Continue processing other files instead of returning error directly
 		}
 
 		err = s.SaveImageTextKeywords(image.ID, textKeywords)
 		if err != nil {
-			log.Printf("Failed to save text for image ID %d: %v", image.ID, err)
-			continue // Continue processing other images
+			log.Printf("Failed to save text for file ID %d: %v", image.ID, err)
+			continue // Continue processing other files
 		}
 	}
 

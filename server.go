@@ -31,6 +31,7 @@ func main() {
 	sdk.InitTranslate()
 	sdk.InitPolly()
 	sdk.InitRekognition()
+	sdk.InitTextract()
 
 	// Initialize repositories
 	userRepo := repository.NewUserRepository()
