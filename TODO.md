@@ -28,7 +28,7 @@ Based on AWS AI hands-on learning plan, master major AWS AI services using Go la
 - [ ] Quickly build chatbot prototype
 
 ### Specific Tasks
-- [ ] Create Lex bot in AWS Console
+- [x] Create Lex bot in AWS Console
 - [ ] Implement chat client using Go SDK
 - [ ] Integrate CLI interaction
 
