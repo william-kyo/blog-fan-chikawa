@@ -6,6 +6,46 @@ import (
 	"time"
 )
 
+type Chat struct {
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"userId"`
+	Title     string    `json:"title"`
+	BotName   string    `json:"botName"`
+	SessionID string    `json:"sessionId"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type ChatHistory struct {
+	Chat     *Chat          `json:"chat"`
+	Messages []*ChatMessage `json:"messages"`
+}
+
+type ChatMessage struct {
+	ID      int64     `json:"id"`
+	ChatID  int64     `json:"chatId"`
+	Content string    `json:"content"`
+	IsUser  bool      `json:"isUser"`
+	Intent  *string   `json:"intent,omitempty"`
+	SentAt  time.Time `json:"sentAt"`
+}
+
+type CreateChatInput struct {
+	UserID   int64   `json:"userId"`
+	Title    string  `json:"title"`
+	BotName  *string `json:"botName,omitempty"`
+	BotID    *string `json:"botId,omitempty"`
+	BotAlias *string `json:"botAlias,omitempty"`
+	LocaleID *string `json:"localeId,omitempty"`
+}
+
+type LexConfig struct {
+	BotName  string `json:"botName"`
+	BotID    string `json:"botId"`
+	BotAlias string `json:"botAlias"`
+	LocaleID string `json:"localeId"`
+}
+
 type LoginUser struct {
 	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
@@ -16,6 +56,11 @@ type Mutation struct {
 }
 
 type Query struct {
+}
+
+type SendMessageInput struct {
+	ChatID  int64  `json:"chatId"`
+	Message string `json:"message"`
 }
 
 type TextToSpeech struct {

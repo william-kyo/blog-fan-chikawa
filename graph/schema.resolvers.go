@@ -34,6 +34,21 @@ func (r *mutationResolver) TextToSpeech(ctx context.Context, input model.TextToS
 	return r.Resolver.TextToSpeech(ctx, input)
 }
 
+// CreateChat is the resolver for the createChat field.
+func (r *mutationResolver) CreateChat(ctx context.Context, input model.CreateChatInput) (*model.Chat, error) {
+	return r.Resolver.CreateChat(ctx, input)
+}
+
+// SendMessage is the resolver for the sendMessage field.
+func (r *mutationResolver) SendMessage(ctx context.Context, input model.SendMessageInput) (*model.ChatMessage, error) {
+	return r.Resolver.SendMessage(ctx, input)
+}
+
+// DeleteChat is the resolver for the deleteChat field.
+func (r *mutationResolver) DeleteChat(ctx context.Context, chatID int64) (bool, error) {
+	return r.Resolver.DeleteChat(ctx, chatID)
+}
+
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return r.Resolver.Users(ctx)
@@ -42,6 +57,21 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 // FetchLastData is the resolver for the fetchLastData field.
 func (r *queryResolver) FetchLastData(ctx context.Context) (string, error) {
 	return r.Resolver.FetchLastData(ctx)
+}
+
+// UserChats is the resolver for the userChats field.
+func (r *queryResolver) UserChats(ctx context.Context, userID int64) ([]*model.Chat, error) {
+	return r.Resolver.UserChats(ctx, userID)
+}
+
+// ChatHistory is the resolver for the chatHistory field.
+func (r *queryResolver) ChatHistory(ctx context.Context, chatID int64) (*model.ChatHistory, error) {
+	return r.Resolver.ChatHistory(ctx, chatID)
+}
+
+// LexConfig is the resolver for the lexConfig field.
+func (r *queryResolver) LexConfig(ctx context.Context) (*model.LexConfig, error) {
+	return r.Resolver.LexConfig(ctx)
 }
 
 // Mutation returns MutationResolver implementation.

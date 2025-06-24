@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Chat API Test</h1>
+    
+    <div>
+        <h2>Test Configuration Loading</h2>
+        <button onclick="testLexConfig()">Load Lex Config</button>
+        <pre id="configResult"></pre>
+    </div>
+    
+    <div>
+        <h2>Test Chat Creation</h2>
+        <input type="number" id="userId" placeholder="User ID" value="1">
+        <input type="text" id="chatTitle" placeholder="Chat Title" value="Test Chat">
+        <button onclick="testCreateChat()">Create Chat</button>
+        <pre id="chatResult"></pre>
+    </div>
+
+    <script>
+        async function testLexConfig() {
+            try {
+                const response = await axios.post('http://localhost:8080/query', {
+                    query: `
+                        query {
+                            lexConfig {
+                                botName
+                                botId
+                                botAlias
+                                localeId
+                            }
+                        }
+                    `
+                });
+                
+                document.getElementById('configResult').textContent = JSON.stringify(response.data, null, 2);
+                console.log('Config response:', response.data);
+                
+            } catch (error) {
+                document.getElementById('configResult').textContent = 'Error: ' + error.message;
+                console.error('Config error:', error);
+            }
+        }
+
+        async function testCreateChat() {
+            try {
+                const userId = document.getElementById('userId').value;
+                const title = document.getElementById('chatTitle').value;
+                
+                const response = await axios.post('http://localhost:8080/query', {
+                    query: `
+                        mutation CreateChat($input: CreateChatInput!) {
+                            createChat(input: $input) {
+                                id
+                                title
+                                botName
+                                sessionId
+                            }
+                        }
+                    `,
+                    variables: {
+                        input: {
+                            userId: parseInt(userId),
+                            title: title
+                        }
+                    }
+                });
+                
+                document.getElementById('chatResult').textContent = JSON.stringify(response.data, null, 2);
+                console.log('Chat response:', response.data);
+                
+                if (response.data.errors) {
+                    alert('Error: ' + response.data.errors[0].message);
+                } else {
+                    alert('Chat created successfully!');
+                }
+                
+            } catch (error) {
+                document.getElementById('chatResult').textContent = 'Error: ' + error.message;
+                console.error('Chat error:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Auto-load config on page load
+        window.onload = function() {
+            testLexConfig();
+        };
+    </script>
+</body>
+</html>

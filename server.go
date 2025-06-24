@@ -8,6 +8,7 @@ import (
 	"blog-fanchiikawa-service/scheduler"
 	"blog-fanchiikawa-service/sdk"
 	"blog-fanchiikawa-service/service"
+	"blog-fanchiikawa-service/websocket"
 	"log"
 	"net/http"
 	"os"
@@ -17,15 +18,21 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/joho/godotenv"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 const defaultPort = "8080"
 
 func main() {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found, using system environment variables")
+	}
+
 	// Initialize infrastructure
 	db.InitMySQL()
-	sdk.InitAWSSession()
+	sdk.InitAWS() // Unified AWS initialization for both SDK v1 and v2
 	sdk.InitS3()
 	sdk.InitComprehend()
 	sdk.InitTranslate()
@@ -42,6 +49,8 @@ func main() {
 	textKeywordRepo := repository.NewTextKeywordRepository()
 	imageTextKeywordRepo := repository.NewImageTextKeywordRepository()
 	transactionMgr := repository.NewTransactionManager()
+	chatRepo := repository.NewChatRepository(db.GetEngine())
+	chatMessageRepo := repository.NewChatMessageRepository(db.GetEngine())
 
 	// Initialize services
 	languageService := service.NewLanguageService()
@@ -50,6 +59,13 @@ func main() {
 	storageService := service.NewStorageService()
 	userService := service.NewUserService(userRepo, deviceRepo, transactionMgr)
 	mediaService := service.NewMediaService(imageRepo, labelRepo, imageLabelRepo, textKeywordRepo, imageTextKeywordRepo, transactionMgr)
+	lexService := sdk.NewLexService()
+	chatService := service.NewChatService(chatRepo, chatMessageRepo, lexService)
+	configService := service.NewConfigService()
+
+	// Initialize WebSocket hub
+	hub := websocket.NewHub()
+	go hub.Run()
 
 	// Initialize resolver
 	resolverInstance := resolver.NewResolver(
@@ -58,6 +74,8 @@ func main() {
 		translateService,
 		speechService,
 		storageService,
+		chatService,
+		configService,
 	)
 
 	// Initialize Scheduler
@@ -87,9 +105,15 @@ func main() {
 		Cache: lru.New[string](100),
 	})
 
+	// Serve static files from web directory
+	http.Handle("/chat/", http.StripPrefix("/chat/", http.FileServer(http.Dir("./web/"))))
+	
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
+	http.HandleFunc("/ws", hub.ServeWS)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Printf("Chat interface available at http://localhost:%s/chat/", port)
+	log.Printf("WebSocket endpoint available at ws://localhost:%s/ws", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

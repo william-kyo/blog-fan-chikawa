@@ -36,6 +36,50 @@ input TextToSpeech {
   text: String!
 }
 
+type Chat {
+  id: ID!
+  userId: ID!
+  title: String!
+  botName: String!
+  sessionId: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type ChatMessage {
+  id: ID!
+  chatId: ID!
+  content: String!
+  isUser: Boolean!
+  intent: String
+  sentAt: Time!
+}
+
+type ChatHistory {
+  chat: Chat!
+  messages: [ChatMessage!]!
+}
+
+type LexConfig {
+  botName: String!
+  botId: String!
+  botAlias: String!
+  localeId: String!
+}
+
+input CreateChatInput {
+  userId: ID!
+  title: String!
+  botName: String
+  botId: String
+  botAlias: String
+  localeId: String
+}
+
+input SendMessageInput {
+  chatId: ID!
+  message: String!
+}
 
 type Mutation {
   login(input: LoginUser!): User!
@@ -43,9 +87,15 @@ type Mutation {
   detectSentiment(input: String!): String!
   translateText(input: TranslateText): String!
   textToSpeech(input: TextToSpeech!): String!
+  createChat(input: CreateChatInput!): Chat!
+  sendMessage(input: SendMessageInput!): ChatMessage!
+  deleteChat(chatId: ID!): Boolean!
 }
 
 type Query {
   users: [User!]!
   fetchLastData: String!
+  userChats(userId: ID!): [Chat!]!
+  chatHistory(chatId: ID!): ChatHistory!
+  lexConfig: LexConfig!
 }

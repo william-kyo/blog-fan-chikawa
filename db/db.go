@@ -54,7 +54,12 @@ func InitMySQL() {
 	log.Println("Connected to Database with XORM")
 }
 
+// GetEngine returns the XORM engine instance
+func GetEngine() *xorm.Engine {
+	return Engine
+}
+
 // SyncSchema synchronizes the database schema with the model structs
 func SyncSchema() error {
-	return Engine.Sync2(new(User), new(UserDevice), new(Image), new(Label), new(ImageLabel), new(TextKeyword), new(ImageTextKeyword))
+	return Engine.Sync2(new(User), new(UserDevice), new(Image), new(Label), new(ImageLabel), new(TextKeyword), new(ImageTextKeyword), new(Chat), new(ChatMessage))
 }

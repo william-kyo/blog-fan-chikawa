@@ -137,6 +137,14 @@ blog-fanchiikawa-service/
   - Sentiment analysis
 - **Speech Services**: Text-to-speech conversion using AWS Polly
 - **Storage**: File management using AWS S3
+- **Image Processing**: 
+  - Image label detection using AWS Rekognition
+  - Text extraction from images and PDFs using AWS Textract
+- **Chat Services**: 
+  - Real-time chat with AWS Lex bots
+  - Chat session management
+  - Message history and persistence
+  - WebSocket real-time communication
 
 ### Architecture Benefits
 - ✅ **Single Responsibility**: Each layer has one clear purpose
@@ -153,11 +161,74 @@ blog-fanchiikawa-service/
 - AWS account with configured credentials
 
 ### Environment Setup
-1. Copy `.env.example` to `.env` and configure:
+
+#### 1. AWS Configuration
+Ensure you have AWS credentials configured. You can either:
+- Configure AWS CLI: `aws configure --profile your-profile-name`
+- Set up AWS credentials file in `~/.aws/credentials`
+- Use IAM roles (for EC2/Lambda deployment)
+
+#### 2. Environment Variables
+Copy `.env.example` to `.env` and configure:
 ```bash
+cp .env.example .env
+```
+
+Edit `.env` with your configuration:
+```bash
+# Required AWS Configuration
 AWS_PROFILE=your-aws-profile
 AWS_DEFAULT_REGION=ap-northeast-1
+
+# Required AWS Lex Configuration
+AWS_LEX_BOT_NAME=YourBotName
+AWS_LEX_BOT_ID=your-bot-id-here
+AWS_LEX_BOT_ALIAS=TSTALIASID
+AWS_LEX_LOCALE_ID=en_US
+
+# Optional Database Configuration
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_USER=root
+# DB_PASSWORD=
+# DB_NAME=fanchiikawa
+
+# Optional Application Configuration
+# PORT=8080
+# DEBUG=false
 ```
+
+#### 3. AWS Lex Bot Setup
+Before using the chat functionality, you need to create an AWS Lex bot:
+
+1. **Create a Lex Bot in AWS Console:**
+   - Go to AWS Lex Console
+   - Create a new bot or use an existing one
+   - Note down the Bot ID, Bot Alias, and ensure it supports your desired locale
+
+2. **Required Permissions:**
+   Your AWS credentials need the following permissions:
+   ```json
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Effect": "Allow",
+               "Action": [
+                   "lex:RecognizeText",
+                   "lex:RecognizeUtterance"
+               ],
+               "Resource": "arn:aws:lex:*:*:bot/*"
+           }
+       ]
+   }
+   ```
+
+3. **Update Environment Variables:**
+   - `AWS_LEX_BOT_NAME`: Display name for your bot
+   - `AWS_LEX_BOT_ID`: The unique bot ID from AWS Lex
+   - `AWS_LEX_BOT_ALIAS`: Bot alias (default: TSTALIASID for test alias)
+   - `AWS_LEX_LOCALE_ID`: Locale for the bot (e.g., en_US, ja_JP)
 
 ### Installation
 ```bash
@@ -173,7 +244,18 @@ go run server.go
 ```
 
 ### Usage
-The GraphQL playground will be available at: `http://localhost:8080/`
+
+The application provides multiple interfaces:
+- **GraphQL Playground**: `http://localhost:8080/` - For API exploration and testing
+- **Chat Interface**: `http://localhost:8080/chat/` - Modern web chat interface with auto-configured Lex settings
+- **WebSocket Endpoint**: `ws://localhost:8080/ws` - For real-time communication
+
+#### Chat Interface Features
+- **Auto-Configuration**: Bot settings are automatically loaded from server environment variables
+- **Simplified Setup**: Users only need to provide User ID and Chat Title
+- **Real-time Messaging**: WebSocket-based instant communication
+- **Chat History**: Persistent message storage and retrieval
+- **Responsive Design**: Works on desktop and mobile devices
 
 #### Example Queries
 
@@ -203,6 +285,83 @@ mutation {
 ```graphql
 mutation {
   detectLanguage(input: "Hello world")
+}
+```
+
+**Get Lex Configuration:**
+```graphql
+query {
+  lexConfig {
+    botName
+    botId
+    botAlias
+    localeId
+  }
+}
+```
+
+**Create Chat Session:**
+```graphql
+mutation {
+  createChat(input: {
+    userId: 1
+    title: "My Chat Session"
+    # botName, botId, botAlias, localeId are optional - will use environment variables if not provided
+  }) {
+    id
+    title
+    botName
+    sessionId
+  }
+}
+```
+
+**Send Message to Lex Bot:**
+```graphql
+mutation {
+  sendMessage(input: {
+    chatId: 1
+    message: "Hello, how can you help me?"
+  }) {
+    id
+    content
+    isUser
+    intent
+    sentAt
+  }
+}
+```
+
+**Get Chat History:**
+```graphql
+query {
+  chatHistory(chatId: 1) {
+    chat {
+      id
+      title
+      botName
+    }
+    messages {
+      id
+      content
+      isUser
+      intent
+      sentAt
+    }
+  }
+}
+```
+
+**Get User's Chats:**
+```graphql
+query {
+  userChats(userId: 1) {
+    id
+    title
+    botName
+    sessionId
+    createdAt
+  }
 }
 ```
 

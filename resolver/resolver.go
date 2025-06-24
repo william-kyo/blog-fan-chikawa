@@ -11,6 +11,8 @@ type Resolver struct {
 	TranslateService service.TranslateService
 	SpeechService    service.SpeechService
 	StorageService   service.StorageService
+	ChatService      service.ChatService
+	ConfigService    service.ConfigService
 }
 
 // NewResolver creates a new Resolver instance with all services
@@ -20,6 +22,8 @@ func NewResolver(
 	translateService service.TranslateService,
 	speechService service.SpeechService,
 	storageService service.StorageService,
+	chatService service.ChatService,
+	configService service.ConfigService,
 ) *Resolver {
 	return &Resolver{
 		UserService:      userService,
@@ -27,5 +31,7 @@ func NewResolver(
 		TranslateService: translateService,
 		SpeechService:    speechService,
 		StorageService:   storageService,
+		ChatService:      chatService,
+		ConfigService:    configService,
 	}
 }
