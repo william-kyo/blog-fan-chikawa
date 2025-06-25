@@ -64,7 +64,7 @@ func main() {
 	configService := service.NewConfigService()
 
 	// Initialize WebSocket hub
-	hub := websocket.NewHub()
+	hub := websocket.NewHub(chatService)
 	go hub.Run()
 
 	// Initialize resolver

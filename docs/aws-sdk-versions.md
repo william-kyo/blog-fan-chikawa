@@ -1,87 +1,87 @@
-# AWS SDK版本管理说明
+# AWS SDK Version Management Guide
 
-## 为什么需要两个AWS SDK版本？
+## Why Do We Need Two AWS SDK Versions?
 
 ### AWS SDK v1 (`github.com/aws/aws-sdk-go`)
-- **用途**: 现有服务 (S3, Comprehend, Translate, Polly, Rekognition, Textract)
-- **稳定性**: 成熟稳定，广泛使用
-- **配置类型**: `*session.Session`
+- **Purpose**: Existing services (S3, Comprehend, Translate, Polly, Rekognition, Textract)
+- **Stability**: Mature and stable, widely used
+- **Configuration Type**: `*session.Session`
 
 ### AWS SDK v2 (`github.com/aws/aws-sdk-go-v2`)
-- **用途**: 新服务 (Lex Runtime V2)
-- **原因**: Lex Runtime V2 API只在SDK v2中提供
-- **配置类型**: `aws.Config`
-- **优势**: 更好的性能，更现代的API设计
+- **Purpose**: New services (Lex Runtime V2)
+- **Reason**: Lex Runtime V2 API is only available in SDK v2
+- **Configuration Type**: `aws.Config`
+- **Advantages**: Better performance, more modern API design
 
-## 统一配置管理
+## Unified Configuration Management
 
-### 优化前的问题
+### Problems Before Optimization
 ```go
-// 重复的配置代码
+// Duplicated configuration code
 func InitAWSSession() {
     region := os.Getenv("AWS_DEFAULT_REGION")
     profile := os.Getenv("AWS_PROFILE")
-    // ... SDK v1 初始化
+    // ... SDK v1 initialization
 }
 
 func InitAWSConfigV2() {
-    region := os.Getenv("AWS_DEFAULT_REGION") // 重复
-    profile := os.Getenv("AWS_PROFILE")       // 重复
-    // ... SDK v2 初始化
+    region := os.Getenv("AWS_DEFAULT_REGION") // Duplicated
+    profile := os.Getenv("AWS_PROFILE")       // Duplicated
+    // ... SDK v2 initialization
 }
 ```
 
-### 优化后的解决方案
+### Optimized Solution
 ```go
-// 统一的配置获取
+// Unified configuration retrieval
 func getAWSCredentials() (region, profile string) {
-    // 统一从环境变量读取配置
+    // Unified reading from environment variables
 }
 
-// 统一初始化方法
+// Unified initialization method
 func InitAWS() {
     region, profile := getAWSCredentials()
-    // 同时初始化SDK v1和v2
+    // Initialize both SDK v1 and v2
 }
 
-// 保持向后兼容的方法
+// Backward compatible methods
 func InitAWSSession() { /* legacy support */ }
 func InitAWSConfigV2() { /* legacy support */ }
 ```
 
-## 使用方式
+## Usage
 
-### 简化的服务器初始化
+### Simplified Server Initialization
 ```go
 func main() {
-    // 一次调用初始化所有AWS配置
+    // Single call to initialize all AWS configurations
     sdk.InitAWS()
     
-    // 其他服务初始化...
+    // Other service initialization...
 }
 ```
 
-### 服务中使用不同版本
+### Using Different Versions in Services
 ```go
-// 使用SDK v1的服务
+// Service using SDK v1
 func NewS3Service() {
     session := sdk.GetAWSSession()
     return s3.New(session)
 }
 
-// 使用SDK v2的服务
+// Service using SDK v2
 func NewLexService() {
     config := sdk.GetAWSConfig()
     return lexruntimev2.NewFromConfig(config)
 }
 ```
 
-## 未来计划
+## Future Plans
 
-1. **渐进式迁移**: 可以逐步将现有服务迁移到SDK v2
-2. **统一SDK**: 当所有服务都迁移后，可以移除SDK v1依赖
-3. **向后兼容**: 保持旧的初始化方法，确保不破坏现有代码
+1. **Progressive Migration**: Gradually migrate existing services to SDK v2
+2. **Unified SDK**: Remove SDK v1 dependency when all services are migrated
+3. **Backward Compatibility**: Maintain legacy initialization methods to ensure existing code isn't broken
 
-## 总结
+## Summary
 
-这种设计既解决了代码重复问题，又保持了向后兼容性，同时支持新的Lex Runtime V2功能。通过统一的`InitAWS()`方法，简化了AWS配置管理。
+This design solves the code duplication problem while maintaining backward compatibility and supporting new Lex Runtime V2 functionality. Through the unified `InitAWS()` method, AWS configuration management is simplified.

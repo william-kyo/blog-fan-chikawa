@@ -25,12 +25,12 @@ Based on AWS AI hands-on learning plan, master major AWS AI services using Go la
 ## 📅 Week 4: Chatbot Practice
 
 ### Task Goals
-- [ ] Quickly build chatbot prototype
+- [x] Quickly build chatbot prototype
 
 ### Specific Tasks
 - [x] Create Lex bot in AWS Console
-- [ ] Implement chat client using Go SDK
-- [ ] Integrate Web applicatin
+- [x] Implement chat client using Go SDK
+- [x] Integrate Web applicatin
 
 ---
 

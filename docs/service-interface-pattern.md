@@ -1,140 +1,140 @@
-# 服务接口设计模式
+# Service Interface Design Pattern
 
-## 问题背景
+## Problem Background
 
-之前的代码存在不一致的设计模式：
+The previous code had inconsistent design patterns:
 
-### 不一致的服务定义
+### Inconsistent Service Definitions
 ```go
-// ❌ 混合模式 - 不一致
+// ❌ Mixed pattern - inconsistent
 type Resolver struct {
-    UserService    service.UserService     // 接口类型
-    ChatService    *service.ChatService    // 指针类型 ❌
-    ConfigService  *service.ConfigService  // 指针类型 ❌
+    UserService    service.UserService     // Interface type
+    ChatService    *service.ChatService    // Pointer type ❌
+    ConfigService  *service.ConfigService  // Pointer type ❌
 }
 ```
 
-## 解决方案：统一接口模式
+## Solution: Unified Interface Pattern
 
-### ✅ 一致的接口设计
+### ✅ Consistent Interface Design
 ```go
-// ✅ 统一接口模式
+// ✅ Unified interface pattern
 type Resolver struct {
-    UserService    service.UserService    // 接口
-    ChatService    service.ChatService    // 接口
-    ConfigService  service.ConfigService  // 接口
+    UserService    service.UserService    // Interface
+    ChatService    service.ChatService    // Interface
+    ConfigService  service.ConfigService  // Interface
 }
 ```
 
-## 接口设计模式的优势
+## Advantages of Interface Design Pattern
 
-### 1. **依赖注入 (Dependency Injection)**
+### 1. **Dependency Injection**
 ```go
-// 接口使得依赖注入更清晰
+// Interfaces make dependency injection clearer
 func NewResolver(
-    userService service.UserService,      // 可以注入任何实现
-    chatService service.ChatService,      // 可以注入任何实现
-    configService service.ConfigService,  // 可以注入任何实现
+    userService service.UserService,      // Can inject any implementation
+    chatService service.ChatService,      // Can inject any implementation
+    configService service.ConfigService,  // Can inject any implementation
 ) *Resolver
 ```
 
-### 2. **可测试性 (Testability)**
+### 2. **Testability**
 ```go
-// 容易创建 mock 对象进行单元测试
+// Easy to create mock objects for unit testing
 type mockChatService struct{}
 func (m *mockChatService) CreateChat(...) (*ChatResponse, error) {
     return &ChatResponse{ID: 123}, nil
 }
 
-// 测试时注入 mock
+// Inject mock during testing
 resolver := NewResolver(
     userService,
-    &mockChatService{}, // 注入测试用的 mock
+    &mockChatService{}, // Inject test mock
     configService,
 )
 ```
 
-### 3. **松耦合 (Loose Coupling)**
+### 3. **Loose Coupling**
 ```go
-// Resolver 只依赖接口，不依赖具体实现
+// Resolver only depends on interfaces, not concrete implementations
 type ChatService interface {
     CreateChat(req *CreateChatRequest) (*ChatResponse, error)
     SendMessage(ctx context.Context, req *SendMessageRequest) (*MessageResponse, error)
-    // ... 其他方法
+    // ... other methods
 }
 
-// 具体实现可以随时替换
-type chatService struct { /* 实现细节 */ }
-type advancedChatService struct { /* 不同的实现 */ }
+// Concrete implementations can be swapped anytime
+type chatService struct { /* implementation details */ }
+type advancedChatService struct { /* different implementation */ }
 ```
 
-### 4. **接口隔离 (Interface Segregation)**
+### 4. **Interface Segregation**
 ```go
-// 每个服务都有清晰的职责界限
+// Each service has clear responsibility boundaries
 type ConfigService interface {
-    GetLexConfig() *LexConfig  // 只关心配置相关的方法
+    GetLexConfig() *LexConfig  // Only concerned with configuration methods
 }
 
 type ChatService interface {
-    CreateChat(...) (...)      // 只关心聊天相关的方法
+    CreateChat(...) (...)      // Only concerned with chat-related methods
     SendMessage(...) (...)
 }
 ```
 
-## 实现模式
+## Implementation Pattern
 
-### 接口定义
+### Interface Definition
 ```go
-// 1. 定义公开接口
+// 1. Define public interface
 type ChatService interface {
     CreateChat(req *CreateChatRequest) (*ChatResponse, error)
-    // ... 其他公开方法
+    // ... other public methods
 }
 
-// 2. 私有实现结构体
+// 2. Private implementation struct
 type chatService struct {
     chatRepo        repository.ChatRepository
     chatMessageRepo repository.ChatMessageRepository
     lexService      *sdk.LexService
 }
 
-// 3. 构造函数返回接口
+// 3. Constructor returns interface
 func NewChatService(...) ChatService {
-    return &chatService{ /* 初始化 */ }
+    return &chatService{ /* initialization */ }
 }
 ```
 
-### 方法实现
+### Method Implementation
 ```go
-// 4. 实现接口方法 (私有结构体)
+// 4. Implement interface methods (private struct)
 func (s *chatService) CreateChat(req *CreateChatRequest) (*ChatResponse, error) {
-    // 具体实现
+    // Concrete implementation
 }
 ```
 
-## 代码质量提升
+## Code Quality Improvement
 
-### 修改前 (不一致)
+### Before Modification (Inconsistent)
 ```go
-❌ 混合类型，难以测试
-chatService    *service.ChatService    // 具体类型
-configService  *service.ConfigService  // 具体类型
+❌ Mixed types, difficult to test
+chatService    *service.ChatService    // Concrete type
+configService  *service.ConfigService  // Concrete type
 ```
 
-### 修改后 (一致)
+### After Modification (Consistent)
 ```go
-✅ 统一接口，易于测试和维护
-ChatService    service.ChatService     // 接口
-ConfigService  service.ConfigService   // 接口
+✅ Unified interfaces, easy to test and maintain
+ChatService    service.ChatService     // Interface
+ConfigService  service.ConfigService   // Interface
 ```
 
-## 总结
+## Summary
 
-通过统一使用接口模式：
+By uniformly using the interface pattern:
 
-1. **提高代码一致性** - 所有服务都遵循相同的设计模式
-2. **增强可测试性** - 容易创建 mock 对象进行单元测试
-3. **降低耦合度** - 依赖接口而非具体实现
-4. **提升可维护性** - 更容易替换和扩展服务实现
+1. **Improve Code Consistency** - All services follow the same design pattern
+2. **Enhance Testability** - Easy to create mock objects for unit testing
+3. **Reduce Coupling** - Depend on interfaces rather than concrete implementations
+4. **Improve Maintainability** - Easier to replace and extend service implementations
 
-这是Go语言中推荐的企业级应用设计模式！
+This is the recommended enterprise-level application design pattern in Go!
