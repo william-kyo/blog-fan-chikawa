@@ -39,6 +39,21 @@ type CreateChatInput struct {
 	LocaleID *string `json:"localeId,omitempty"`
 }
 
+type CustomLabel struct {
+	Name       string  `json:"name"`
+	Confidence float64 `json:"confidence"`
+}
+
+type CustomLabelsResult struct {
+	ImageURL string         `json:"imageUrl"`
+	S3Key    string         `json:"s3Key"`
+	Labels   []*CustomLabel `json:"labels"`
+}
+
+type DetectCustomLabelsInput struct {
+	S3Key string `json:"s3Key"`
+}
+
 type LexConfig struct {
 	BotName  string `json:"botName"`
 	BotID    string `json:"botId"`
@@ -56,6 +71,17 @@ type Mutation struct {
 }
 
 type Query struct {
+}
+
+type S3Field struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type S3PresignedURL struct {
+	UploadURL string     `json:"uploadUrl"`
+	Key       string     `json:"key"`
+	Fields    []*S3Field `json:"fields"`
 }
 
 type SendMessageInput struct {

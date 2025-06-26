@@ -72,6 +72,17 @@ type ComplexityRoot struct {
 		SentAt  func(childComplexity int) int
 	}
 
+	CustomLabel struct {
+		Confidence func(childComplexity int) int
+		Name       func(childComplexity int) int
+	}
+
+	CustomLabelsResult struct {
+		ImageURL func(childComplexity int) int
+		Labels   func(childComplexity int) int
+		S3Key    func(childComplexity int) int
+	}
+
 	LexConfig struct {
 		BotAlias func(childComplexity int) int
 		BotID    func(childComplexity int) int
@@ -80,22 +91,36 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateChat      func(childComplexity int, input model.CreateChatInput) int
-		DeleteChat      func(childComplexity int, chatID int64) int
-		DetectLanguage  func(childComplexity int, input string) int
-		DetectSentiment func(childComplexity int, input string) int
-		Login           func(childComplexity int, input model.LoginUser) int
-		SendMessage     func(childComplexity int, input model.SendMessageInput) int
-		TextToSpeech    func(childComplexity int, input model.TextToSpeech) int
-		TranslateText   func(childComplexity int, input *model.TranslateText) int
+		CreateChat                  func(childComplexity int, input model.CreateChatInput) int
+		DeleteChat                  func(childComplexity int, chatID int64) int
+		DetectCustomLabelsFromS3    func(childComplexity int, input model.DetectCustomLabelsInput) int
+		DetectLanguage              func(childComplexity int, input string) int
+		DetectSentiment             func(childComplexity int, input string) int
+		Login                       func(childComplexity int, input model.LoginUser) int
+		SendMessage                 func(childComplexity int, input model.SendMessageInput) int
+		TextToSpeech                func(childComplexity int, input model.TextToSpeech) int
+		TranslateText               func(childComplexity int, input *model.TranslateText) int
+		UploadAndDetectCustomLabels func(childComplexity int, file graphql.Upload) int
 	}
 
 	Query struct {
-		ChatHistory   func(childComplexity int, chatID int64) int
-		FetchLastData func(childComplexity int) int
-		LexConfig     func(childComplexity int) int
-		UserChats     func(childComplexity int, userID int64) int
-		Users         func(childComplexity int) int
+		ChatHistory         func(childComplexity int, chatID int64) int
+		FetchLastData       func(childComplexity int) int
+		GenerateS3UploadURL func(childComplexity int, filename string) int
+		LexConfig           func(childComplexity int) int
+		UserChats           func(childComplexity int, userID int64) int
+		Users               func(childComplexity int) int
+	}
+
+	S3Field struct {
+		Name  func(childComplexity int) int
+		Value func(childComplexity int) int
+	}
+
+	S3PresignedURL struct {
+		Fields    func(childComplexity int) int
+		Key       func(childComplexity int) int
+		UploadURL func(childComplexity int) int
 	}
 
 	User struct {
@@ -124,6 +149,8 @@ type MutationResolver interface {
 	CreateChat(ctx context.Context, input model.CreateChatInput) (*model.Chat, error)
 	SendMessage(ctx context.Context, input model.SendMessageInput) (*model.ChatMessage, error)
 	DeleteChat(ctx context.Context, chatID int64) (bool, error)
+	UploadAndDetectCustomLabels(ctx context.Context, file graphql.Upload) (*model.CustomLabelsResult, error)
+	DetectCustomLabelsFromS3(ctx context.Context, input model.DetectCustomLabelsInput) (*model.CustomLabelsResult, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
@@ -131,6 +158,7 @@ type QueryResolver interface {
 	UserChats(ctx context.Context, userID int64) ([]*model.Chat, error)
 	ChatHistory(ctx context.Context, chatID int64) (*model.ChatHistory, error)
 	LexConfig(ctx context.Context) (*model.LexConfig, error)
+	GenerateS3UploadURL(ctx context.Context, filename string) (*model.S3PresignedURL, error)
 }
 
 type executableSchema struct {
@@ -257,6 +285,41 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ChatMessage.SentAt(childComplexity), true
 
+	case "CustomLabel.confidence":
+		if e.complexity.CustomLabel.Confidence == nil {
+			break
+		}
+
+		return e.complexity.CustomLabel.Confidence(childComplexity), true
+
+	case "CustomLabel.name":
+		if e.complexity.CustomLabel.Name == nil {
+			break
+		}
+
+		return e.complexity.CustomLabel.Name(childComplexity), true
+
+	case "CustomLabelsResult.imageUrl":
+		if e.complexity.CustomLabelsResult.ImageURL == nil {
+			break
+		}
+
+		return e.complexity.CustomLabelsResult.ImageURL(childComplexity), true
+
+	case "CustomLabelsResult.labels":
+		if e.complexity.CustomLabelsResult.Labels == nil {
+			break
+		}
+
+		return e.complexity.CustomLabelsResult.Labels(childComplexity), true
+
+	case "CustomLabelsResult.s3Key":
+		if e.complexity.CustomLabelsResult.S3Key == nil {
+			break
+		}
+
+		return e.complexity.CustomLabelsResult.S3Key(childComplexity), true
+
 	case "LexConfig.botAlias":
 		if e.complexity.LexConfig.BotAlias == nil {
 			break
@@ -308,6 +371,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteChat(childComplexity, args["chatId"].(int64)), true
+
+	case "Mutation.detectCustomLabelsFromS3":
+		if e.complexity.Mutation.DetectCustomLabelsFromS3 == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_detectCustomLabelsFromS3_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DetectCustomLabelsFromS3(childComplexity, args["input"].(model.DetectCustomLabelsInput)), true
 
 	case "Mutation.detectLanguage":
 		if e.complexity.Mutation.DetectLanguage == nil {
@@ -381,6 +456,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.TranslateText(childComplexity, args["input"].(*model.TranslateText)), true
 
+	case "Mutation.uploadAndDetectCustomLabels":
+		if e.complexity.Mutation.UploadAndDetectCustomLabels == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadAndDetectCustomLabels_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadAndDetectCustomLabels(childComplexity, args["file"].(graphql.Upload)), true
+
 	case "Query.chatHistory":
 		if e.complexity.Query.ChatHistory == nil {
 			break
@@ -399,6 +486,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.FetchLastData(childComplexity), true
+
+	case "Query.generateS3UploadUrl":
+		if e.complexity.Query.GenerateS3UploadURL == nil {
+			break
+		}
+
+		args, err := ec.field_Query_generateS3UploadUrl_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GenerateS3UploadURL(childComplexity, args["filename"].(string)), true
 
 	case "Query.lexConfig":
 		if e.complexity.Query.LexConfig == nil {
@@ -425,6 +524,41 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Users(childComplexity), true
+
+	case "S3Field.name":
+		if e.complexity.S3Field.Name == nil {
+			break
+		}
+
+		return e.complexity.S3Field.Name(childComplexity), true
+
+	case "S3Field.value":
+		if e.complexity.S3Field.Value == nil {
+			break
+		}
+
+		return e.complexity.S3Field.Value(childComplexity), true
+
+	case "S3PresignedURL.fields":
+		if e.complexity.S3PresignedURL.Fields == nil {
+			break
+		}
+
+		return e.complexity.S3PresignedURL.Fields(childComplexity), true
+
+	case "S3PresignedURL.key":
+		if e.complexity.S3PresignedURL.Key == nil {
+			break
+		}
+
+		return e.complexity.S3PresignedURL.Key(childComplexity), true
+
+	case "S3PresignedURL.uploadUrl":
+		if e.complexity.S3PresignedURL.UploadURL == nil {
+			break
+		}
+
+		return e.complexity.S3PresignedURL.UploadURL(childComplexity), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -505,6 +639,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateChatInput,
+		ec.unmarshalInputDetectCustomLabelsInput,
 		ec.unmarshalInputLoginUser,
 		ec.unmarshalInputSendMessageInput,
 		ec.unmarshalInputTextToSpeech,
@@ -671,6 +806,29 @@ func (ec *executionContext) field_Mutation_deleteChat_argsChatID(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_detectCustomLabelsFromS3_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_detectCustomLabelsFromS3_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_detectCustomLabelsFromS3_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.DetectCustomLabelsInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDetectCustomLabelsInput2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐDetectCustomLabelsInput(ctx, tmp)
+	}
+
+	var zeroVal model.DetectCustomLabelsInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_detectLanguage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -809,6 +967,29 @@ func (ec *executionContext) field_Mutation_translateText_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_uploadAndDetectCustomLabels_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_uploadAndDetectCustomLabels_argsFile(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["file"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_uploadAndDetectCustomLabels_argsFile(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (graphql.Upload, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+	if tmp, ok := rawArgs["file"]; ok {
+		return ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
+	}
+
+	var zeroVal graphql.Upload
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -852,6 +1033,29 @@ func (ec *executionContext) field_Query_chatHistory_argsChatID(
 	}
 
 	var zeroVal int64
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_generateS3UploadUrl_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_generateS3UploadUrl_argsFilename(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filename"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_generateS3UploadUrl_argsFilename(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (string, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filename"))
+	if tmp, ok := rawArgs["filename"]; ok {
+		return ec.unmarshalNString2string(ctx, tmp)
+	}
+
+	var zeroVal string
 	return zeroVal, nil
 }
 
@@ -1665,6 +1869,232 @@ func (ec *executionContext) fieldContext_ChatMessage_sentAt(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _CustomLabel_name(ctx context.Context, field graphql.CollectedField, obj *model.CustomLabel) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomLabel_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomLabel_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomLabel",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomLabel_confidence(ctx context.Context, field graphql.CollectedField, obj *model.CustomLabel) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomLabel_confidence(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Confidence, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomLabel_confidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomLabel",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomLabelsResult_imageUrl(ctx context.Context, field graphql.CollectedField, obj *model.CustomLabelsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomLabelsResult_imageUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomLabelsResult_imageUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomLabelsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomLabelsResult_s3Key(ctx context.Context, field graphql.CollectedField, obj *model.CustomLabelsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomLabelsResult_s3Key(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.S3Key, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomLabelsResult_s3Key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomLabelsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomLabelsResult_labels(ctx context.Context, field graphql.CollectedField, obj *model.CustomLabelsResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomLabelsResult_labels(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Labels, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.CustomLabel)
+	fc.Result = res
+	return ec.marshalNCustomLabel2ᚕᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabelᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomLabelsResult_labels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomLabelsResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_CustomLabel_name(ctx, field)
+			case "confidence":
+				return ec.fieldContext_CustomLabel_confidence(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CustomLabel", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LexConfig_botName(ctx context.Context, field graphql.CollectedField, obj *model.LexConfig) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LexConfig_botName(ctx, field)
 	if err != nil {
@@ -2323,6 +2753,132 @@ func (ec *executionContext) fieldContext_Mutation_deleteChat(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_uploadAndDetectCustomLabels(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_uploadAndDetectCustomLabels(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UploadAndDetectCustomLabels(rctx, fc.Args["file"].(graphql.Upload))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CustomLabelsResult)
+	fc.Result = res
+	return ec.marshalNCustomLabelsResult2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabelsResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_uploadAndDetectCustomLabels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "imageUrl":
+				return ec.fieldContext_CustomLabelsResult_imageUrl(ctx, field)
+			case "s3Key":
+				return ec.fieldContext_CustomLabelsResult_s3Key(ctx, field)
+			case "labels":
+				return ec.fieldContext_CustomLabelsResult_labels(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CustomLabelsResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_uploadAndDetectCustomLabels_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_detectCustomLabelsFromS3(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_detectCustomLabelsFromS3(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DetectCustomLabelsFromS3(rctx, fc.Args["input"].(model.DetectCustomLabelsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CustomLabelsResult)
+	fc.Result = res
+	return ec.marshalNCustomLabelsResult2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabelsResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_detectCustomLabelsFromS3(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "imageUrl":
+				return ec.fieldContext_CustomLabelsResult_imageUrl(ctx, field)
+			case "s3Key":
+				return ec.fieldContext_CustomLabelsResult_s3Key(ctx, field)
+			case "labels":
+				return ec.fieldContext_CustomLabelsResult_labels(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CustomLabelsResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_detectCustomLabelsFromS3_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_users(ctx, field)
 	if err != nil {
@@ -2609,6 +3165,69 @@ func (ec *executionContext) fieldContext_Query_lexConfig(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_generateS3UploadUrl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_generateS3UploadUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GenerateS3UploadURL(rctx, fc.Args["filename"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.S3PresignedURL)
+	fc.Result = res
+	return ec.marshalNS3PresignedURL2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐS3PresignedURL(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_generateS3UploadUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "uploadUrl":
+				return ec.fieldContext_S3PresignedURL_uploadUrl(ctx, field)
+			case "key":
+				return ec.fieldContext_S3PresignedURL_key(ctx, field)
+			case "fields":
+				return ec.fieldContext_S3PresignedURL_fields(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type S3PresignedURL", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_generateS3UploadUrl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query___type(ctx, field)
 	if err != nil {
@@ -2735,6 +3354,232 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _S3Field_name(ctx context.Context, field graphql.CollectedField, obj *model.S3Field) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3Field_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_S3Field_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "S3Field",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _S3Field_value(ctx context.Context, field graphql.CollectedField, obj *model.S3Field) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3Field_value(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_S3Field_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "S3Field",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _S3PresignedURL_uploadUrl(ctx context.Context, field graphql.CollectedField, obj *model.S3PresignedURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3PresignedURL_uploadUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UploadURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_S3PresignedURL_uploadUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "S3PresignedURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _S3PresignedURL_key(ctx context.Context, field graphql.CollectedField, obj *model.S3PresignedURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3PresignedURL_key(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Key, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_S3PresignedURL_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "S3PresignedURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _S3PresignedURL_fields(ctx context.Context, field graphql.CollectedField, obj *model.S3PresignedURL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_S3PresignedURL_fields(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Fields, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.S3Field)
+	fc.Result = res
+	return ec.marshalNS3Field2ᚕᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐS3Fieldᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_S3PresignedURL_fields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "S3PresignedURL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_S3Field_name(ctx, field)
+			case "value":
+				return ec.fieldContext_S3Field_value(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type S3Field", field.Name)
 		},
 	}
 	return fc, nil
@@ -5193,6 +6038,33 @@ func (ec *executionContext) unmarshalInputCreateChatInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDetectCustomLabelsInput(ctx context.Context, obj any) (model.DetectCustomLabelsInput, error) {
+	var it model.DetectCustomLabelsInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"s3Key"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "s3Key":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("s3Key"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.S3Key = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLoginUser(ctx context.Context, obj any) (model.LoginUser, error) {
 	var it model.LoginUser
 	asMap := map[string]any{}
@@ -5518,6 +6390,99 @@ func (ec *executionContext) _ChatMessage(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var customLabelImplementors = []string{"CustomLabel"}
+
+func (ec *executionContext) _CustomLabel(ctx context.Context, sel ast.SelectionSet, obj *model.CustomLabel) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, customLabelImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CustomLabel")
+		case "name":
+			out.Values[i] = ec._CustomLabel_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "confidence":
+			out.Values[i] = ec._CustomLabel_confidence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var customLabelsResultImplementors = []string{"CustomLabelsResult"}
+
+func (ec *executionContext) _CustomLabelsResult(ctx context.Context, sel ast.SelectionSet, obj *model.CustomLabelsResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, customLabelsResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CustomLabelsResult")
+		case "imageUrl":
+			out.Values[i] = ec._CustomLabelsResult_imageUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "s3Key":
+			out.Values[i] = ec._CustomLabelsResult_s3Key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "labels":
+			out.Values[i] = ec._CustomLabelsResult_labels(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var lexConfigImplementors = []string{"LexConfig"}
 
 func (ec *executionContext) _LexConfig(ctx context.Context, sel ast.SelectionSet, obj *model.LexConfig) graphql.Marshaler {
@@ -5643,6 +6608,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteChat":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteChat(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploadAndDetectCustomLabels":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadAndDetectCustomLabels(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "detectCustomLabelsFromS3":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_detectCustomLabelsFromS3(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -5799,6 +6778,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "generateS3UploadUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_generateS3UploadUrl(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -5807,6 +6808,99 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var s3FieldImplementors = []string{"S3Field"}
+
+func (ec *executionContext) _S3Field(ctx context.Context, sel ast.SelectionSet, obj *model.S3Field) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, s3FieldImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("S3Field")
+		case "name":
+			out.Values[i] = ec._S3Field_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._S3Field_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var s3PresignedURLImplementors = []string{"S3PresignedURL"}
+
+func (ec *executionContext) _S3PresignedURL(ctx context.Context, sel ast.SelectionSet, obj *model.S3PresignedURL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, s3PresignedURLImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("S3PresignedURL")
+		case "uploadUrl":
+			out.Values[i] = ec._S3PresignedURL_uploadUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "key":
+			out.Values[i] = ec._S3PresignedURL_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fields":
+			out.Values[i] = ec._S3PresignedURL_fields(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6434,6 +7528,95 @@ func (ec *executionContext) unmarshalNCreateChatInput2blogᚑfanchiikawaᚑservi
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNCustomLabel2ᚕᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CustomLabel) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCustomLabel2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCustomLabel2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabel(ctx context.Context, sel ast.SelectionSet, v *model.CustomLabel) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CustomLabel(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCustomLabelsResult2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabelsResult(ctx context.Context, sel ast.SelectionSet, v model.CustomLabelsResult) graphql.Marshaler {
+	return ec._CustomLabelsResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCustomLabelsResult2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCustomLabelsResult(ctx context.Context, sel ast.SelectionSet, v *model.CustomLabelsResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CustomLabelsResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDetectCustomLabelsInput2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐDetectCustomLabelsInput(ctx context.Context, v any) (model.DetectCustomLabelsInput, error) {
+	res, err := ec.unmarshalInputDetectCustomLabelsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
 func (ec *executionContext) unmarshalNID2int64(ctx context.Context, v any) (int64, error) {
 	res, err := graphql.UnmarshalInt64(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -6467,6 +7650,74 @@ func (ec *executionContext) marshalNLexConfig2ᚖblogᚑfanchiikawaᚑserviceᚋ
 func (ec *executionContext) unmarshalNLoginUser2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐLoginUser(ctx context.Context, v any) (model.LoginUser, error) {
 	res, err := ec.unmarshalInputLoginUser(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNS3Field2ᚕᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐS3Fieldᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.S3Field) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNS3Field2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐS3Field(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNS3Field2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐS3Field(ctx context.Context, sel ast.SelectionSet, v *model.S3Field) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._S3Field(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNS3PresignedURL2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐS3PresignedURL(ctx context.Context, sel ast.SelectionSet, v model.S3PresignedURL) graphql.Marshaler {
+	return ec._S3PresignedURL(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNS3PresignedURL2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐS3PresignedURL(ctx context.Context, sel ast.SelectionSet, v *model.S3PresignedURL) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._S3PresignedURL(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNSendMessageInput2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐSendMessageInput(ctx context.Context, v any) (model.SendMessageInput, error) {
@@ -6503,6 +7754,22 @@ func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v an
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalUpload(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

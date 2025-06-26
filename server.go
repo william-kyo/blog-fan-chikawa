@@ -62,6 +62,7 @@ func main() {
 	lexService := sdk.NewLexService()
 	chatService := service.NewChatService(chatRepo, chatMessageRepo, lexService)
 	configService := service.NewConfigService()
+	customLabelsService := service.NewCustomLabelsService()
 
 	// Initialize WebSocket hub
 	hub := websocket.NewHub(chatService)
@@ -76,6 +77,7 @@ func main() {
 		storageService,
 		chatService,
 		configService,
+		customLabelsService,
 	)
 
 	// Initialize Scheduler
@@ -97,6 +99,7 @@ func main() {
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.MultipartForm{})
 
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 
@@ -107,6 +110,7 @@ func main() {
 
 	// Serve static files from web directory
 	http.Handle("/chat/", http.StripPrefix("/chat/", http.FileServer(http.Dir("./web/"))))
+	http.Handle("/custom-labels/", http.StripPrefix("/custom-labels/", http.FileServer(http.Dir("./web/"))))
 	
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
@@ -114,6 +118,7 @@ func main() {
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Printf("Chat interface available at http://localhost:%s/chat/", port)
+	log.Printf("Custom Labels interface available at http://localhost:%s/custom-labels/", port)
 	log.Printf("WebSocket endpoint available at ws://localhost:%s/ws", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

@@ -120,3 +120,66 @@ func DetectText(bucketName, objectKey string) ([]string, error) {
 
 	return results, nil
 }
+
+// CustomLabelResult represents a custom label detection result
+type CustomLabelResult struct {
+	Name       string  `json:"name"`
+	Confidence float64 `json:"confidence"`
+}
+
+// DetectCustomLabels uses custom model to detect labels in S3 images
+func DetectCustomLabels(bucketName, objectKey, projectVersionArn string) ([]CustomLabelResult, error) {
+	// Build detect custom labels request
+	input := &rekognition.DetectCustomLabelsInput{
+		Image: &rekognition.Image{
+			S3Object: &rekognition.S3Object{
+				Bucket: aws.String(bucketName),
+				Name:   aws.String(objectKey),
+			},
+		},
+		ProjectVersionArn: aws.String(projectVersionArn),
+		MaxResults:        aws.Int64(10),       // Return maximum 10 labels
+		MinConfidence:     aws.Float64(50.0),  // Minimum confidence 50%
+	}
+
+	// Call API
+	result, err := Rekognition.DetectCustomLabels(input)
+	if err != nil {
+		log.Printf("Failed to call DetectCustomLabels: %v", err)
+		return nil, fmt.Errorf("failed to call detect custom labels: %w", err)
+	}
+
+	// Output results
+	log.Printf("Image: s3://%s/%s\n", bucketName, objectKey)
+	log.Printf("Detected %d custom labels:\n\n", len(result.CustomLabels))
+
+	var results []CustomLabelResult
+	for i, label := range result.CustomLabels {
+		log.Printf("%d. %s (Confidence: %.2f%%)\n",
+			i+1, *label.Name, *label.Confidence)
+
+		results = append(results, CustomLabelResult{
+			Name:       *label.Name,
+			Confidence: *label.Confidence,
+		})
+	}
+
+	// Sort by confidence (highest first) and return top 2
+	if len(results) > 1 {
+		// Simple bubble sort for small arrays
+		for i := 0; i < len(results)-1; i++ {
+			for j := 0; j < len(results)-1-i; j++ {
+				if results[j].Confidence < results[j+1].Confidence {
+					results[j], results[j+1] = results[j+1], results[j]
+				}
+			}
+		}
+	}
+
+	// Return top 2 results
+	if len(results) > 2 {
+		results = results[:2]
+	}
+
+	return results, nil
+}

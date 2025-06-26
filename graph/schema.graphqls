@@ -3,6 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 scalar Time
+scalar Upload
 
 type User {
   id: ID!  
@@ -81,6 +82,32 @@ input SendMessageInput {
   message: String!
 }
 
+type CustomLabel {
+  name: String!
+  confidence: Float!
+}
+
+type CustomLabelsResult {
+  imageUrl: String!
+  s3Key: String!
+  labels: [CustomLabel!]!
+}
+
+type S3PresignedURL {
+  uploadUrl: String!
+  key: String!
+  fields: [S3Field!]!
+}
+
+type S3Field {
+  name: String!
+  value: String!
+}
+
+input DetectCustomLabelsInput {
+  s3Key: String!
+}
+
 type Mutation {
   login(input: LoginUser!): User!
   detectLanguage(input: String!): String!
@@ -90,6 +117,8 @@ type Mutation {
   createChat(input: CreateChatInput!): Chat!
   sendMessage(input: SendMessageInput!): ChatMessage!
   deleteChat(chatId: ID!): Boolean!
+  uploadAndDetectCustomLabels(file: Upload!): CustomLabelsResult!
+  detectCustomLabelsFromS3(input: DetectCustomLabelsInput!): CustomLabelsResult!
 }
 
 type Query {
@@ -98,4 +127,5 @@ type Query {
   userChats(userId: ID!): [Chat!]!
   chatHistory(chatId: ID!): ChatHistory!
   lexConfig: LexConfig!
+  generateS3UploadUrl(filename: String!): S3PresignedURL!
 }

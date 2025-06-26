@@ -7,6 +7,8 @@ package graph
 import (
 	"blog-fanchiikawa-service/graph/model"
 	"context"
+
+	"github.com/99designs/gqlgen/graphql"
 )
 
 // Login is the resolver for the login field.
@@ -49,6 +51,16 @@ func (r *mutationResolver) DeleteChat(ctx context.Context, chatID int64) (bool, 
 	return r.Resolver.DeleteChat(ctx, chatID)
 }
 
+// UploadAndDetectCustomLabels is the resolver for the uploadAndDetectCustomLabels field.
+func (r *mutationResolver) UploadAndDetectCustomLabels(ctx context.Context, file graphql.Upload) (*model.CustomLabelsResult, error) {
+	return r.Resolver.UploadAndDetectCustomLabels(ctx, file)
+}
+
+// DetectCustomLabelsFromS3 is the resolver for the detectCustomLabelsFromS3 field.
+func (r *mutationResolver) DetectCustomLabelsFromS3(ctx context.Context, input model.DetectCustomLabelsInput) (*model.CustomLabelsResult, error) {
+	return r.Resolver.DetectCustomLabelsFromS3(ctx, input)
+}
+
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return r.Resolver.Users(ctx)
@@ -72,6 +84,11 @@ func (r *queryResolver) ChatHistory(ctx context.Context, chatID int64) (*model.C
 // LexConfig is the resolver for the lexConfig field.
 func (r *queryResolver) LexConfig(ctx context.Context) (*model.LexConfig, error) {
 	return r.Resolver.LexConfig(ctx)
+}
+
+// GenerateS3UploadURL is the resolver for the generateS3UploadUrl field.
+func (r *queryResolver) GenerateS3UploadURL(ctx context.Context, filename string) (*model.S3PresignedURL, error) {
+	return r.Resolver.GenerateS3UploadURL(ctx, filename)
 }
 
 // Mutation returns MutationResolver implementation.
