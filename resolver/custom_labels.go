@@ -9,31 +9,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
-// Login handles the login mutation
-func (r *Resolver) Login(ctx context.Context, input model.LoginUser) (*model.User, error) {
-	return r.UserService.Login(input.Nickname, input.Email, input.DeviceID)
-}
-
-// DetectLanguage handles the detectLanguage mutation
-func (r *Resolver) DetectLanguage(ctx context.Context, input string) (string, error) {
-	return r.LanguageService.DetectLanguage(input)
-}
-
-// DetectSentiment handles the detectSentiment mutation
-func (r *Resolver) DetectSentiment(ctx context.Context, input string) (string, error) {
-	return r.LanguageService.DetectSentiment(input)
-}
-
-// TranslateText handles the translateText mutation
-func (r *Resolver) TranslateText(ctx context.Context, input *model.TranslateText) (string, error) {
-	return r.TranslateService.TranslateText(input.Text, input.SourceLanguage, input.TargetLanguage)
-}
-
-// TextToSpeech handles the textToSpeech mutation
-func (r *Resolver) TextToSpeech(ctx context.Context, input model.TextToSpeech) (string, error) {
-	return r.SpeechService.TextToSpeech(input.Text)
-}
-
 // UploadAndDetectCustomLabels handles file upload and custom labels detection
 func (r *Resolver) UploadAndDetectCustomLabels(ctx context.Context, file graphql.Upload) (*model.CustomLabelsResult, error) {
 	// Basic validation
@@ -58,3 +33,26 @@ func (r *Resolver) DetectCustomLabelsFromS3(ctx context.Context, input model.Det
 	return r.CustomLabelsService.DetectFromS3KeyForResolver(input.S3Key)
 }
 
+// GenerateS3UploadURL generates presigned URL for S3 upload
+func (r *Resolver) GenerateS3UploadURL(ctx context.Context, filename string) (*model.S3PresignedURL, error) {
+	// Call service layer
+	response, err := r.CustomLabelsService.GenerateUploadURL(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert fields map to GraphQL model
+	var fields []*model.S3Field
+	for name, value := range response.Fields {
+		fields = append(fields, &model.S3Field{
+			Name:  name,
+			Value: value,
+		})
+	}
+
+	return &model.S3PresignedURL{
+		UploadURL: response.UploadURL,
+		Key:       response.Key,
+		Fields:    fields,
+	}, nil
+}
