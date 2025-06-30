@@ -34,13 +34,37 @@ Based on AWS AI hands-on learning plan, master major AWS AI services using Go la
 
 ---
 
-## 📅 Week 5: Lightweight Model Deployment Practice
+## 📅 Week 5: AWS Bedrock Foundation Models Practice
+
+### Task Goals
+- [ ] Master AWS Bedrock foundation models and generative AI capabilities
+
+### Specific Tasks
+- [ ] Set up AWS Bedrock access and model permissions
+- [ ] Integrate Claude 3 model for advanced text generation
+- [ ] Implement text summarization using foundation models
+- [ ] Create multi-modal content generation (text + image prompts)
+- [ ] Build conversation memory for chat continuity
+- [ ] Add streaming response support for real-time generation
+- [ ] Implement prompt engineering best practices
+- [ ] Create content moderation using Bedrock guardrails
+
+### Learning Focus
+- Foundation model selection and comparison
+- Prompt engineering techniques
+- Token usage optimization and cost management
+- Streaming vs batch inference patterns
+- Content safety and responsible AI practices
+
+---
+
+## 📅 Week 6: Lightweight Model Deployment Practice
 
 ### Task Goals
 - [ ] Familiarize with SageMaker deployment and inference process
 
 ### Specific Tasks
-- [ ] Deploy built-in models using JumpStart
+- [x] Deploy built-in models using JumpStart
 - [ ] Call SageMaker Endpoint with Go HTTP Client
 - [ ] Simple form upload CSV for inference requests
 
