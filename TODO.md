@@ -34,27 +34,25 @@ Based on AWS AI hands-on learning plan, master major AWS AI services using Go la
 
 ---
 
-## 📅 Week 5: AWS Bedrock Foundation Models Practice
+## 📅 Week 5: AWS Bedrock Video Comment Generator
 
 ### Task Goals
-- [ ] Master AWS Bedrock foundation models and generative AI capabilities
+- [ ] Implement automatic video content commenting using AWS Bedrock
 
 ### Specific Tasks
-- [ ] Set up AWS Bedrock access and model permissions
-- [ ] Integrate Claude 3 model for advanced text generation
-- [ ] Implement text summarization using foundation models
-- [ ] Create multi-modal content generation (text + image prompts)
-- [ ] Build conversation memory for chat continuity
-- [ ] Add streaming response support for real-time generation
-- [ ] Implement prompt engineering best practices
-- [ ] Create content moderation using Bedrock guardrails
+- [x] Set up AWS Bedrock access and model permissions
+- [ ] Integrate Claude 3 model for text generation
+- [ ] Create video content analysis prompt templates
+- [ ] Implement automatic comment generation based on video metadata
+- [ ] Add GraphQL mutation for video comment generation
+- [ ] Create simple web interface for testing comment generation
+- [ ] Implement comment style variations (positive, analytical, humorous)
 
 ### Learning Focus
-- Foundation model selection and comparison
-- Prompt engineering techniques
-- Token usage optimization and cost management
-- Streaming vs batch inference patterns
-- Content safety and responsible AI practices
+- Bedrock Claude 3 model integration with Go
+- Prompt engineering for comment generation
+- Text generation best practices
+- Cost-effective API usage patterns
 
 ---
 
