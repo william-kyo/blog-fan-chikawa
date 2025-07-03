@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Lex Chat</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .chat-config {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9ff;
+        }
+
+        .config-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .config-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .config-input[readonly] {
+            background-color: #f5f5f5;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .config-info {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .config-info small {
+            color: #666;
+            font-style: italic;
+        }
+
+        .config-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .config-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .config-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: #4CAF50;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .message.bot .message-content {
+            background: #e0e0e0;
+            color: #333;
+            margin-right: 10px;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+        }
+
+        .message.user .message-avatar {
+            background: #2196F3;
+        }
+
+        .message.bot .message-avatar {
+            background: #FF9800;
+        }
+
+        .message-meta {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .send-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status {
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status.connected {
+            color: #667eea;
+        }
+
+        .status.disconnected {
+            color: #f44336;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>AWS Lex Chat Interface</h1>
+                <p>Real-time chat with AWS Lex bot using WebSocket</p>
+                <small style="opacity: 0.8;">Bot configuration is automatically loaded from server environment</small>
+            </div>
+
+            <div class="chat-config">
+                <div class="config-form">
+                    <input v-model="config.userId" class="config-input" placeholder="User ID" type="number">
+                    <input v-model="config.title" class="config-input" placeholder="Chat Title">
+                    <input v-model="config.botName" class="config-input" placeholder="Bot Name" readonly>
+                    <input v-model="config.botAlias" class="config-input" placeholder="Bot Alias" readonly>
+                    <input v-model="config.localeId" class="config-input" placeholder="Locale ID (e.g., en_US)" readonly>
+                </div>
+                <div class="config-info">
+                    <small>Bot configuration is loaded from server environment variables</small>
+                </div>
+                <button @click="createChat" :disabled="!canCreateChat || loading" class="config-button">
+                    <span v-if="loading" class="loading"></span>
+                    <span v-else>Create Chat Session</span>
+                </button>
+            </div>
+
+            <div class="status" :class="{ connected: connected, disconnected: !connected }">
+                {{ statusMessage }}
+            </div>
+
+            <div class="chat-messages" ref="messagesContainer">
+                <div v-for="message in messages" :key="message.id" class="message" :class="{ user: message.isUser, bot: !message.isUser }">
+                    <div class="message-avatar">{{ message.isUser ? 'U' : 'B' }}</div>
+                    <div class="message-content">
+                        {{ message.content }}
+                        <div class="message-meta">
+                            {{ formatTime(message.sentAt) }}
+                            <span v-if="!message.isUser && message.intent"> • Intent: {{ message.intent }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input 
+                    v-model="newMessage" 
+                    @keypress.enter="sendMessage"
+                    :disabled="!currentChatId || loading"
+                    class="chat-input" 
+                    placeholder="Type your message here...">
+                <button @click="sendMessage" :disabled="!currentChatId || !newMessage.trim() || loading" class="send-button">
+                    <span v-if="loading" class="loading"></span>
+                    <span v-else>Send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    // WebSocket connection
+                    ws: null,
+                    connected: false,
+                    
+                    // Chat configuration
+                    config: {
+                        userId: 1,
+                        title: 'Test Chat',
+                        botName: '',
+                        botId: '',  // This will be loaded from backend config
+                        botAlias: '',
+                        localeId: ''
+                    },
+                    
+                    // Chat state
+                    currentChatId: null,
+                    messages: [],
+                    newMessage: '',
+                    loading: false
+                }
+            },
+            
+            computed: {
+                canCreateChat() {
+                    return this.config.userId && this.config.title;
+                },
+                
+                statusMessage() {
+                    if (!this.connected) return 'WebSocket Disconnected';
+                    if (!this.currentChatId) return 'Connected - Create a chat session to start';
+                    return `Connected - Chat ID: ${this.currentChatId}`;
+                }
+            },
+            
+            async mounted() {
+                this.connectWebSocket();
+                await this.loadLexConfig();
+            },
+            
+            beforeUnmount() {
+                if (this.ws) {
+                    this.ws.close();
+                }
+            },
+            
+            methods: {
+                connectWebSocket() {
+                    const wsUrl = `ws://localhost:8080/ws`;
+                    this.ws = new WebSocket(wsUrl);
+                    
+                    this.ws.onopen = () => {
+                        this.connected = true;
+                        console.log('WebSocket connected');
+                    };
+                    
+                    this.ws.onclose = () => {
+                        this.connected = false;
+                        console.log('WebSocket disconnected');
+                        // Attempt to reconnect after 3 seconds
+                        setTimeout(() => {
+                            this.connectWebSocket();
+                        }, 3000);
+                    };
+                    
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        try {
+                            const message = JSON.parse(event.data);
+                            this.handleWebSocketMessage(message);
+                        } catch (error) {
+                            console.error('Error parsing WebSocket message:', error);
+                        }
+                    };
+                },
+                
+                handleWebSocketMessage(message) {
+                    console.log('Received message:', message);
+                    
+                    switch (message.type) {
+                        case 'chat_message':
+                            this.messages.push(message.data);
+                            this.scrollToBottom();
+                            break;
+                            
+                        case 'message_response':
+                            // Handle message response from WebSocket
+                            if (message.data) {
+                                this.messages.push(message.data);
+                                this.scrollToBottom();
+                            }
+                            this.loading = false;
+                            break;
+                            
+                        case 'error':
+                            console.error('WebSocket error:', message.error);
+                            alert('Error: ' + message.error);
+                            this.loading = false;
+                            break;
+                            
+                        case 'pong':
+                            console.log('Received pong');
+                            break;
+                            
+                        default:
+                            console.log('Unknown message type:', message.type);
+                    }
+                },
+                
+                async createChat() {
+                    this.loading = true;
+                    console.log('Creating chat with config:', this.config);
+                    
+                    try {
+                        const query = `
+                            mutation CreateChat($input: CreateChatInput!) {
+                                createChat(input: $input) {
+                                    id
+                                    title
+                                    botName
+                                    sessionId
+                                }
+                            }
+                        `;
+                        
+                        const variables = {
+                            input: {
+                                userId: parseInt(this.config.userId),
+                                title: this.config.title
+                                // botName, botId, botAlias, localeId will be read from environment variables on the server
+                            }
+                        };
+                        
+                        console.log('Sending mutation with variables:', variables);
+                        
+                        const response = await axios.post('http://localhost:8080/query', {
+                            query,
+                            variables
+                        });
+                        
+                        console.log('Full response:', response);
+                        
+                        if (response.data.errors) {
+                            console.error('GraphQL errors:', response.data.errors);
+                            throw new Error(response.data.errors[0].message);
+                        }
+                        
+                        const chat = response.data.data.createChat;
+                        this.currentChatId = parseInt(chat.id);
+                        this.messages = [];
+                        
+                        console.log('Chat created successfully:', chat);
+                        alert('Chat session created successfully! ID: ' + chat.id);
+                        
+                    } catch (error) {
+                        console.error('Error creating chat:', error);
+                        console.error('Error details:', error.response?.data);
+                        alert('Failed to create chat: ' + error.message);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                sendMessage() {
+                    if (!this.newMessage.trim() || !this.currentChatId || !this.connected) return;
+                    
+                    const userMessage = {
+                        id: Date.now(),
+                        content: this.newMessage,
+                        isUser: true,
+                        sentAt: new Date().toISOString()
+                    };
+                    
+                    this.messages.push(userMessage);
+                    const messageText = this.newMessage;
+                    this.newMessage = '';
+                    this.loading = true;
+                    
+                    // Generate unique message ID for tracking
+                    const messageId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    
+                    // Send message via WebSocket
+                    const wsMessage = {
+                        type: 'send_message',
+                        chatId: this.currentChatId,
+                        content: messageText,
+                        messageId: messageId
+                    };
+                    
+                    try {
+                        this.ws.send(JSON.stringify(wsMessage));
+                        console.log('Message sent via WebSocket:', wsMessage);
+                        this.scrollToBottom();
+                    } catch (error) {
+                        console.error('Error sending WebSocket message:', error);
+                        alert('Failed to send message: ' + error.message);
+                        this.loading = false;
+                    }
+                },
+                
+                formatTime(timestamp) {
+                    return new Date(timestamp).toLocaleTimeString();
+                },
+                
+                async loadLexConfig() {
+                    try {
+                        const query = `
+                            query {
+                                lexConfig {
+                                    botName
+                                    botId
+                                    botAlias
+                                    localeId
+                                }
+                            }
+                        `;
+                        
+                        const response = await axios.post('http://localhost:8080/query', {
+                            query
+                        });
+                        
+                        if (response.data.errors) {
+                            console.warn('Failed to load Lex config:', response.data.errors[0].message);
+                            return;
+                        }
+                        
+                        const config = response.data.data.lexConfig;
+                        
+                        // Update config with values from backend
+                        this.config.botName = config.botName || 'MyBot';
+                        this.config.botId = config.botId;
+                        this.config.botAlias = config.botAlias || 'TSTALIASID';
+                        this.config.localeId = config.localeId || 'en_US';
+                        
+                        console.log('Loaded Lex config:', config);
+                        
+                    } catch (error) {
+                        console.warn('Failed to load Lex config:', error.message);
+                    }
+                },
+                
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const container = this.$refs.messagesContainer;
+                        container.scrollTop = container.scrollHeight;
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

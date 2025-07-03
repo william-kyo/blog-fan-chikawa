@@ -109,16 +109,40 @@ func main() {
 	})
 
 	// Serve static files from web directory
-	http.Handle("/chat/", http.StripPrefix("/chat/", http.FileServer(http.Dir("./web/"))))
-	http.Handle("/custom-labels/", http.StripPrefix("/custom-labels/", http.FileServer(http.Dir("./web/"))))
+	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("./web/"))))
 	
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	// Serve individual pages
+	http.HandleFunc("/chat/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/chat.html")
+	})
+	http.HandleFunc("/custom-labels/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/custom-labels.html")
+	})
+	http.HandleFunc("/test/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/test.html")
+	})
+	http.HandleFunc("/home/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/index.html")
+	})
+	
+	http.Handle("/playground/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 	http.HandleFunc("/ws", hub.ServeWS)
+	
+	// Default route to navigation page
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "./web/index.html")
+		} else {
+			http.NotFound(w, r)
+		}
+	})
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
+	log.Printf("Navigation page available at http://localhost:%s/", port)
+	log.Printf("GraphQL playground available at http://localhost:%s/playground/", port)
 	log.Printf("Chat interface available at http://localhost:%s/chat/", port)
 	log.Printf("Custom Labels interface available at http://localhost:%s/custom-labels/", port)
+	log.Printf("API Test page available at http://localhost:%s/test/", port)
 	log.Printf("WebSocket endpoint available at ws://localhost:%s/ws", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

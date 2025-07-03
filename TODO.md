@@ -34,17 +34,14 @@ Based on AWS AI hands-on learning plan, master major AWS AI services using Go la
 
 ---
 
-## 📅 Week 5: AWS Bedrock Video Comment Generator
+## 📅 Week 5: Anthropic Image Comment Generator
 
 ### Task Goals
-- [ ] Implement automatic video content commenting using AWS Bedrock
+- [ ] Implement automatic image content commenting using Anthropic API
 
 ### Specific Tasks
-- [x] Set up AWS Bedrock access and model permissions
-- [ ] Integrate Claude 3 model for text generation
-- [ ] Create video content analysis prompt templates
-- [ ] Implement automatic comment generation based on video metadata
-- [ ] Add GraphQL mutation for video comment generation
+- [ ] Implement automatic comment generation based on image metadata
+- [ ] Add GraphQL mutation for image comment generation
 - [ ] Create simple web interface for testing comment generation
 - [ ] Implement comment style variations (positive, analytical, humorous)
 
