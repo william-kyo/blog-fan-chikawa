@@ -34,22 +34,23 @@ Based on AWS AI hands-on learning plan, master major AWS AI services using Go la
 
 ---
 
-## 📅 Week 5: Anthropic Image Comment Generator
+## 📅 Week 5: Anthropic API Comment Reply Generator
 
 ### Task Goals
-- [ ] Implement automatic image content commenting using Anthropic API
+- [ ] Implement comment reply generation using Anthropic API with image context
 
 ### Specific Tasks
-- [ ] Implement automatic comment generation based on image metadata
-- [ ] Add GraphQL mutation for image comment generation
-- [ ] Create simple web interface for testing comment generation
-- [ ] Implement comment style variations (positive, analytical, humorous)
+- [ ] 1. Set up Anthropic API integration in backend
+- [ ] 2. Create image upload and comment input interface
+- [ ] 3. Implement prompt engineering for context-aware reply generation
+- [ ] 4. Add GraphQL mutation for comment reply generation
+- [ ] 5. Create web page displaying 3 suggested reply options
 
 ### Learning Focus
-- Bedrock Claude 3 model integration with Go
-- Prompt engineering for comment generation
-- Text generation best practices
-- Cost-effective API usage patterns
+- Anthropic API integration with Go
+- Image analysis and context-aware prompt engineering
+- Comment reply generation best practices
+- Multi-option response generation and presentation
 
 ---
 
