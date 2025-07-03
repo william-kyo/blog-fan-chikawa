@@ -108,6 +108,19 @@ input DetectCustomLabelsInput {
   s3Key: String!
 }
 
+type CommentReply {
+  style: String!
+  content: String!
+}
+
+type CommentReplyResponse {
+  replies: [CommentReply!]!
+}
+
+input GenerateCommentRepliesInput {
+  originalComment: String!
+}
+
 type Mutation {
   login(input: LoginUser!): User!
   detectLanguage(input: String!): String!
@@ -119,6 +132,7 @@ type Mutation {
   deleteChat(chatId: ID!): Boolean!
   uploadAndDetectCustomLabels(file: Upload!): CustomLabelsResult!
   detectCustomLabelsFromS3(input: DetectCustomLabelsInput!): CustomLabelsResult!
+  generateCommentReplies(input: GenerateCommentRepliesInput!, file: Upload!): CommentReplyResponse!
 }
 
 type Query {

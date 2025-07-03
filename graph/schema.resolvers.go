@@ -61,6 +61,11 @@ func (r *mutationResolver) DetectCustomLabelsFromS3(ctx context.Context, input m
 	return r.Resolver.DetectCustomLabelsFromS3(ctx, input)
 }
 
+// GenerateCommentReplies is the resolver for the generateCommentReplies field.
+func (r *mutationResolver) GenerateCommentReplies(ctx context.Context, input model.GenerateCommentRepliesInput, file graphql.Upload) (*model.CommentReplyResponse, error) {
+	return r.Resolver.GenerateCommentReplies(ctx, input, file)
+}
+
 // Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return r.Resolver.Users(ctx)

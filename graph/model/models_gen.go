@@ -30,6 +30,15 @@ type ChatMessage struct {
 	SentAt  time.Time `json:"sentAt"`
 }
 
+type CommentReply struct {
+	Style   string `json:"style"`
+	Content string `json:"content"`
+}
+
+type CommentReplyResponse struct {
+	Replies []*CommentReply `json:"replies"`
+}
+
 type CreateChatInput struct {
 	UserID   int64   `json:"userId"`
 	Title    string  `json:"title"`
@@ -52,6 +61,10 @@ type CustomLabelsResult struct {
 
 type DetectCustomLabelsInput struct {
 	S3Key string `json:"s3Key"`
+}
+
+type GenerateCommentRepliesInput struct {
+	OriginalComment string `json:"originalComment"`
 }
 
 type LexConfig struct {

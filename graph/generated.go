@@ -72,6 +72,15 @@ type ComplexityRoot struct {
 		SentAt  func(childComplexity int) int
 	}
 
+	CommentReply struct {
+		Content func(childComplexity int) int
+		Style   func(childComplexity int) int
+	}
+
+	CommentReplyResponse struct {
+		Replies func(childComplexity int) int
+	}
+
 	CustomLabel struct {
 		Confidence func(childComplexity int) int
 		Name       func(childComplexity int) int
@@ -96,6 +105,7 @@ type ComplexityRoot struct {
 		DetectCustomLabelsFromS3    func(childComplexity int, input model.DetectCustomLabelsInput) int
 		DetectLanguage              func(childComplexity int, input string) int
 		DetectSentiment             func(childComplexity int, input string) int
+		GenerateCommentReplies      func(childComplexity int, input model.GenerateCommentRepliesInput, file graphql.Upload) int
 		Login                       func(childComplexity int, input model.LoginUser) int
 		SendMessage                 func(childComplexity int, input model.SendMessageInput) int
 		TextToSpeech                func(childComplexity int, input model.TextToSpeech) int
@@ -151,6 +161,7 @@ type MutationResolver interface {
 	DeleteChat(ctx context.Context, chatID int64) (bool, error)
 	UploadAndDetectCustomLabels(ctx context.Context, file graphql.Upload) (*model.CustomLabelsResult, error)
 	DetectCustomLabelsFromS3(ctx context.Context, input model.DetectCustomLabelsInput) (*model.CustomLabelsResult, error)
+	GenerateCommentReplies(ctx context.Context, input model.GenerateCommentRepliesInput, file graphql.Upload) (*model.CommentReplyResponse, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
@@ -285,6 +296,27 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ChatMessage.SentAt(childComplexity), true
 
+	case "CommentReply.content":
+		if e.complexity.CommentReply.Content == nil {
+			break
+		}
+
+		return e.complexity.CommentReply.Content(childComplexity), true
+
+	case "CommentReply.style":
+		if e.complexity.CommentReply.Style == nil {
+			break
+		}
+
+		return e.complexity.CommentReply.Style(childComplexity), true
+
+	case "CommentReplyResponse.replies":
+		if e.complexity.CommentReplyResponse.Replies == nil {
+			break
+		}
+
+		return e.complexity.CommentReplyResponse.Replies(childComplexity), true
+
 	case "CustomLabel.confidence":
 		if e.complexity.CustomLabel.Confidence == nil {
 			break
@@ -407,6 +439,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DetectSentiment(childComplexity, args["input"].(string)), true
+
+	case "Mutation.generateCommentReplies":
+		if e.complexity.Mutation.GenerateCommentReplies == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_generateCommentReplies_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.GenerateCommentReplies(childComplexity, args["input"].(model.GenerateCommentRepliesInput), args["file"].(graphql.Upload)), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -640,6 +684,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateChatInput,
 		ec.unmarshalInputDetectCustomLabelsInput,
+		ec.unmarshalInputGenerateCommentRepliesInput,
 		ec.unmarshalInputLoginUser,
 		ec.unmarshalInputSendMessageInput,
 		ec.unmarshalInputTextToSpeech,
@@ -872,6 +917,47 @@ func (ec *executionContext) field_Mutation_detectSentiment_argsInput(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_generateCommentReplies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_generateCommentReplies_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := ec.field_Mutation_generateCommentReplies_argsFile(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["file"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_generateCommentReplies_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (model.GenerateCommentRepliesInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNGenerateCommentRepliesInput2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐGenerateCommentRepliesInput(ctx, tmp)
+	}
+
+	var zeroVal model.GenerateCommentRepliesInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_generateCommentReplies_argsFile(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (graphql.Upload, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+	if tmp, ok := rawArgs["file"]; ok {
+		return ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
+	}
+
+	var zeroVal graphql.Upload
 	return zeroVal, nil
 }
 
@@ -1864,6 +1950,144 @@ func (ec *executionContext) fieldContext_ChatMessage_sentAt(_ context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentReply_style(ctx context.Context, field graphql.CollectedField, obj *model.CommentReply) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentReply_style(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Style, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentReply_style(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentReply",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentReply_content(ctx context.Context, field graphql.CollectedField, obj *model.CommentReply) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentReply_content(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Content, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentReply_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentReply",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CommentReplyResponse_replies(ctx context.Context, field graphql.CollectedField, obj *model.CommentReplyResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CommentReplyResponse_replies(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Replies, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.CommentReply)
+	fc.Result = res
+	return ec.marshalNCommentReply2ᚕᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCommentReplyᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CommentReplyResponse_replies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CommentReplyResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "style":
+				return ec.fieldContext_CommentReply_style(ctx, field)
+			case "content":
+				return ec.fieldContext_CommentReply_content(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CommentReply", field.Name)
 		},
 	}
 	return fc, nil
@@ -2873,6 +3097,65 @@ func (ec *executionContext) fieldContext_Mutation_detectCustomLabelsFromS3(ctx c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_detectCustomLabelsFromS3_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_generateCommentReplies(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_generateCommentReplies(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().GenerateCommentReplies(rctx, fc.Args["input"].(model.GenerateCommentRepliesInput), fc.Args["file"].(graphql.Upload))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CommentReplyResponse)
+	fc.Result = res
+	return ec.marshalNCommentReplyResponse2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCommentReplyResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_generateCommentReplies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "replies":
+				return ec.fieldContext_CommentReplyResponse_replies(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CommentReplyResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_generateCommentReplies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -6065,6 +6348,33 @@ func (ec *executionContext) unmarshalInputDetectCustomLabelsInput(ctx context.Co
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGenerateCommentRepliesInput(ctx context.Context, obj any) (model.GenerateCommentRepliesInput, error) {
+	var it model.GenerateCommentRepliesInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"originalComment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "originalComment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originalComment"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginalComment = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLoginUser(ctx context.Context, obj any) (model.LoginUser, error) {
 	var it model.LoginUser
 	asMap := map[string]any{}
@@ -6390,6 +6700,89 @@ func (ec *executionContext) _ChatMessage(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var commentReplyImplementors = []string{"CommentReply"}
+
+func (ec *executionContext) _CommentReply(ctx context.Context, sel ast.SelectionSet, obj *model.CommentReply) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, commentReplyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommentReply")
+		case "style":
+			out.Values[i] = ec._CommentReply_style(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "content":
+			out.Values[i] = ec._CommentReply_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var commentReplyResponseImplementors = []string{"CommentReplyResponse"}
+
+func (ec *executionContext) _CommentReplyResponse(ctx context.Context, sel ast.SelectionSet, obj *model.CommentReplyResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, commentReplyResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommentReplyResponse")
+		case "replies":
+			out.Values[i] = ec._CommentReplyResponse_replies(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var customLabelImplementors = []string{"CustomLabel"}
 
 func (ec *executionContext) _CustomLabel(ctx context.Context, sel ast.SelectionSet, obj *model.CustomLabel) graphql.Marshaler {
@@ -6622,6 +7015,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "detectCustomLabelsFromS3":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_detectCustomLabelsFromS3(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "generateCommentReplies":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_generateCommentReplies(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -7523,6 +7923,74 @@ func (ec *executionContext) marshalNChatMessage2ᚖblogᚑfanchiikawaᚑservice�
 	return ec._ChatMessage(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNCommentReply2ᚕᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCommentReplyᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CommentReply) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCommentReply2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCommentReply(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCommentReply2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCommentReply(ctx context.Context, sel ast.SelectionSet, v *model.CommentReply) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CommentReply(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCommentReplyResponse2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCommentReplyResponse(ctx context.Context, sel ast.SelectionSet, v model.CommentReplyResponse) graphql.Marshaler {
+	return ec._CommentReplyResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCommentReplyResponse2ᚖblogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCommentReplyResponse(ctx context.Context, sel ast.SelectionSet, v *model.CommentReplyResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CommentReplyResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateChatInput2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐCreateChatInput(ctx context.Context, v any) (model.CreateChatInput, error) {
 	res, err := ec.unmarshalInputCreateChatInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7615,6 +8083,11 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 		}
 	}
 	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalNGenerateCommentRepliesInput2blogᚑfanchiikawaᚑserviceᚋgraphᚋmodelᚐGenerateCommentRepliesInput(ctx context.Context, v any) (model.GenerateCommentRepliesInput, error) {
+	res, err := ec.unmarshalInputGenerateCommentRepliesInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNID2int64(ctx context.Context, v any) (int64, error) {

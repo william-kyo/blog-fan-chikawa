@@ -63,6 +63,7 @@ func main() {
 	chatService := service.NewChatService(chatRepo, chatMessageRepo, lexService)
 	configService := service.NewConfigService()
 	customLabelsService := service.NewCustomLabelsService()
+	commentReplyService := service.NewCommentReplyService()
 
 	// Initialize WebSocket hub
 	hub := websocket.NewHub(chatService)
@@ -78,6 +79,7 @@ func main() {
 		chatService,
 		configService,
 		customLabelsService,
+		commentReplyService,
 	)
 
 	// Initialize Scheduler
@@ -118,6 +120,9 @@ func main() {
 	http.HandleFunc("/custom-labels/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./web/custom-labels.html")
 	})
+	http.HandleFunc("/comment-reply/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/comment-reply.html")
+	})
 	http.HandleFunc("/test/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./web/test.html")
 	})
@@ -142,6 +147,7 @@ func main() {
 	log.Printf("GraphQL playground available at http://localhost:%s/playground/", port)
 	log.Printf("Chat interface available at http://localhost:%s/chat/", port)
 	log.Printf("Custom Labels interface available at http://localhost:%s/custom-labels/", port)
+	log.Printf("Comment Reply Generator available at http://localhost:%s/comment-reply/", port)
 	log.Printf("API Test page available at http://localhost:%s/test/", port)
 	log.Printf("WebSocket endpoint available at ws://localhost:%s/ws", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
