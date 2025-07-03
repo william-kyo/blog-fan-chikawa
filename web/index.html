@@ -4,166 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AWS AI Services Demo - Fanchiikawa Blog Service</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            padding: 40px;
-        }
-
-        .feature-card {
-            background: #f8f9ff;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid #e0e7ff;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-
-        .feature-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .feature-description {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .feature-tech {
-            font-size: 0.9rem;
-            color: #888;
-            margin-bottom: 20px;
-            font-style: italic;
-        }
-
-        .feature-link {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .feature-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
-
-        .status-completed {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-testing {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .footer {
-            background: #f8f9ff;
-            padding: 30px;
-            text-align: center;
-            border-top: 1px solid #e0e7ff;
-        }
-
-        .footer p {
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .tech-stack {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .tech-item {
-            background: white;
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            color: #667eea;
-            border: 1px solid #e0e7ff;
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-                padding: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/assets/css/common.css">
+    <link rel="stylesheet" href="/assets/css/navigation.css">
 </head>
 <body>
     <div class="container">
@@ -181,7 +23,6 @@
                     Intelligent chatbot based on AWS Lex with natural language understanding and conversation management.
                     Features real-time WebSocket communication and GraphQL API integration.
                 </p>
-                <p class="feature-tech">Tech Stack: AWS Lex, WebSocket, GraphQL, Vue.js</p>
                 <a href="chat" class="feature-link">Start Chat</a>
             </div>
 
@@ -193,7 +34,6 @@
                     Image content recognition using AWS Rekognition Custom Labels.
                     Supports drag-and-drop upload, real-time preview, and confidence display.
                 </p>
-                <p class="feature-tech">Tech Stack: AWS Rekognition, S3, GraphQL, Vue.js</p>
                 <a href="custom-labels" class="feature-link">Detect Images</a>
             </div>
 
@@ -205,48 +45,42 @@
                     AI-powered comment reply suggestions using Anthropic API with image context analysis.
                     Upload an image and original comment to get 3 different style reply options.
                 </p>
-                <p class="feature-tech">Tech Stack: Anthropic API, GraphQL, Vue.js</p>
                 <a href="comment-reply" class="feature-link">Generate Replies</a>
             </div>
 
             <div class="feature-card">
-                <div class="status-badge status-testing">🧪 Testing Tool</div>
+                <div class="status-badge status-pending">🧪 Testing Tool</div>
                 <div class="feature-icon">🔧</div>
                 <h3 class="feature-title">API Testing Tool</h3>
                 <p class="feature-description">
                     Developer tool page for testing GraphQL API and various service functions.
                     Includes configuration loading, chat creation, and other testing features.
                 </p>
-                <p class="feature-tech">Tech Stack: GraphQL, Axios, Vanilla JavaScript</p>
                 <a href="test" class="feature-link">Test API</a>
             </div>
 
             <div class="feature-card">
-                <div class="status-badge status-testing">🔗 GraphQL</div>
+                <div class="status-badge status-progress">🔗 GraphQL</div>
                 <div class="feature-icon">🎯</div>
                 <h3 class="feature-title">GraphQL Playground</h3>
                 <p class="feature-description">
                     Interactive development environment for GraphQL queries and mutations.
                     Supports schema browsing, query building, and real-time testing.
                 </p>
-                <p class="feature-tech">Tech Stack: GraphQL, gqlgen</p>
                 <a href="/playground/" class="feature-link">Open Playground</a>
             </div>
         </div>
 
-        <div class="footer">
-            <p><strong>🎯 Learning Objective:</strong> Master AWS AI services and Go development through hands-on projects</p>
-            <p><strong>📚 Current Progress:</strong> Week 5 Completed - Comment Reply Generator</p>
-            
-            <div class="tech-stack">
-                <span class="tech-item">Go</span>
-                <span class="tech-item">GraphQL</span>
-                <span class="tech-item">AWS SDK</span>
-                <span class="tech-item">Vue.js</span>
-                <span class="tech-item">WebSocket</span>
-                <span class="tech-item">MySQL</span>
-            </div>
+        <div class="progress-section">
+            <h2 class="progress-title">🎯 Learning Progress</h2>
+            <p class="progress-description">
+                <strong>Current Status:</strong> Week 5 Completed - Comment Reply Generator<br>
+                <strong>Objective:</strong> Master AWS AI services and Go development through hands-on projects<br>
+                <strong>Tech Stack:</strong> Go • GraphQL • AWS SDK • Vue.js • WebSocket • MySQL • Anthropic API
+            </p>
         </div>
     </div>
+
+    <script src="/assets/js/common.js"></script>
 </body>
 </html>

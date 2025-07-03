@@ -1,0 +1,156 @@
+/* Chat page specific styles */
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.auth-section {
+    padding: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.login-form {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.input-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.chat-section {
+    padding: 30px;
+}
+
+.chat-history {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    max-width: 80%;
+}
+
+.message.user {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-left: auto;
+    text-align: right;
+}
+
+.message.bot {
+    background: white;
+    border: 1px solid #ddd;
+}
+
+.message-time {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 5px;
+}
+
+.message-input-section {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+}
+
+.message-input {
+    flex: 1;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.send-button {
+    align-self: stretch;
+    min-width: 100px;
+}
+
+.controls-section {
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+}
+
+.controls-row {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-connected .status-dot {
+    background: #28a745;
+}
+
+.status-disconnected .status-dot {
+    background: #dc3545;
+}
+
+.status-connecting .status-dot {
+    background: #ffc107;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .login-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .input-group {
+        min-width: auto;
+    }
+    
+    .message-input-section {
+        flex-direction: column;
+    }
+    
+    .send-button {
+        align-self: stretch;
+    }
+    
+    .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .message {
+        max-width: 95%;
+    }
+}

@@ -113,6 +113,9 @@ func main() {
 	// Serve static files from web directory
 	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("./web/"))))
 	
+	// Serve static assets (CSS, JS)
+	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("./web/assets/"))))
+	
 	// Serve individual pages
 	http.HandleFunc("/chat/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./web/chat.html")
